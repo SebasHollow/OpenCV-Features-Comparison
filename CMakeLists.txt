@@ -1,21 +1,32 @@
 cmake_minimum_required(VERSION 2.8)
-project(OPENCV_FEATURES_COMPARISON)
+project( Testing )
+set(CMAKE_BUILD_TYPE Debug)
+SET(OpenCV_DIR "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/opencv/share/OpenCV")
+SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/boost" "/vol/home/s1459929/Dropbox/CS1516/Thesislib/opencv/include")
+SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/boost/stage/lib" "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/opencv/lib")
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+find_package( OpenCV REQUIRED )
+find_package( Boost REQUIRED COMPONENTS thread system program_options filesystem )
+file(GLOB_RECURSE Testing_SOURCES "*.cpp")
+file(GLOB_RECURSE Testing_HEADERS "*.hpp")
 
-find_package(OpenCV 3.0.0 REQUIRED)
-find_package(OpenMP)
+set (Testing_INCLUDE_DIRS "")
+foreach (_headerFile ${Foo_HEADERS})
+    get_filename_component(_dir ${_headerFile} PATH)
+    list (APPEND Testing_INCLUDE_DIRS ${_dir})
+endforeach()
+list(REMOVE_DUPLICATES Testing_INCLUDE_DIRS)
+include_directories( ${Testing_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} )
 
-if (OPENMP_FOUND)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif(OPENMP_FOUND)
-
-include_directories(${OpenCV_INCLUDE_DIR})
-
-link_directories(${OpenCV_LIBRARY_DIR})
-
-add_executable(test_opencv_features2d main.cpp ImageTransformation.hpp ImageTransformation.cpp FeatureAlgorithm.hpp FeatureAlgorithm.cpp AlgorithmEstimation.hpp AlgorithmEstimation.cpp CollectedStatistics.hpp
+add_executable(Testing main.cpp ImageTransformation.hpp ImageTransformation.cpp FeatureAlgorithm.hpp FeatureAlgorithm.cpp AlgorithmEstimation.hpp AlgorithmEstimation.cpp CollectedStatistics.hpp
 CollectedStatistics.cpp)
-
-target_link_libraries( test_opencv_features2d ${OpenCV_LIBRARIES} )
-      
-install (TARGETS test_opencv_features2d DESTINATION bin)
+target_link_libraries( Testing ${OpenCV_LIBS} ${Boost_LIBRARIES} )

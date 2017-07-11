@@ -1,8 +1,6 @@
 #include "FeatureAlgorithm.hpp"
 #include <cassert>
 
-
-
 static cv::Ptr<cv::flann::IndexParams> indexParamsForDescriptorType(int descriptorType, int defaultNorm)
 {
     switch (defaultNorm)
@@ -50,20 +48,12 @@ FeatureAlgorithm::FeatureAlgorithm(const std::string& n, cv::Ptr<cv::Feature2D> 
 bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
 {
     assert(!image.empty());
+    featureEngine->detect(image, kp);
 
-    if (featureEngine)
-    {
-        (*featureEngine)(image, cv::noArray(), kp, desc);
-    }
-    else
-    {
-        detector->detect(image, kp);
-    
-        if (kp.empty())
-            return false;
-    
-        extractor->compute(image, kp, desc);
-    }
+    if (kp.empty())
+        return false;
+
+    featureEngine->compute(image, kp, desc);
     
     
     return kp.size() > 0;

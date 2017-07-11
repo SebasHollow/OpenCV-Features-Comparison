@@ -1,13 +1,23 @@
-
 #include "ImageTransformation.hpp"
+#include "CollectedStatistics.hpp"
+#include "FeatureAlgorithm.hpp"
 #include "AlgorithmEstimation.hpp"
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/nonfree/features2d.hpp>
+#include <boost/foreach.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include "opencv2/core.hpp"
+#include "opencv2/core/utility.hpp"
+#include "opencv2/core/ocl.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/features2d.hpp"
+#include "opencv2/calib3d.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/xfeatures2d.hpp"
 #include <algorithm>
 #include <numeric>
 #include <fstream>
-
 
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
 
@@ -20,12 +30,12 @@ int main(int argc, const char* argv[])
 
     // Initialize list of algorithm tuples:
 
-    algorithms.push_back(FeatureAlgorithm("ORB",   cv::Feature2D::create("ORB"),   useBF));
-    algorithms.push_back(FeatureAlgorithm("AKAZE", cv::Feature2D::create("AKAZE"), useBF));
-    algorithms.push_back(FeatureAlgorithm("KAZE",  cv::Feature2D::create("KAZE"),  useBF));
-    algorithms.push_back(FeatureAlgorithm("BRISK", cv::Feature2D::create("BRISK"), useBF));
-    algorithms.push_back(FeatureAlgorithm("SURF",  cv::Feature2D::create("SURF"),  useBF));
-    algorithms.push_back(FeatureAlgorithm("FREAK", cv::Ptr<cv::FeatureDetector>(new cv::SurfFeatureDetector(2000,4)), cv::Ptr<cv::DescriptorExtractor>(new cv::FREAK()), useBF));
+    algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
+    //algorithms.push_back(FeatureAlgorithm("AKAZE", cv::Feature2D::create("AKAZE"), useBF));
+    //algorithms.push_back(FeatureAlgorithm("KAZE",  cv::Feature2D::create("KAZE"),  useBF));
+    algorithms.push_back(FeatureAlgorithm("BRISK", cv::BRISK::create(), useBF));
+    algorithms.push_back(FeatureAlgorithm("SURF",  cv::xfeatures2d::SURF::create(),  useBF));
+    //algorithms.push_back(FeatureAlgorithm("FREAK", cv::Ptr<cv::FeatureDetector>(new cv::SurfFeatureDetector(2000,4)), cv::Ptr<cv::DescriptorExtractor>(new cv::FREAK()), useBF));
 
     // Initialize list of used transformations:
     if (USE_VERBOSE_TRANSFORMATIONS)
