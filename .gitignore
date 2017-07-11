@@ -51,3 +51,8 @@ CTestTestfile.cmake
 */Makefile
 */cmake_install.cmake
 .DS_Store
+
+### Images and results ###
+*.jpg
+*.png
+*.txt
