@@ -146,6 +146,8 @@ bool performEstimation
             }
         }
 
+        //std::cout << "matchesCount: " << matchesCount << ", visibleFeatures: " << visibleFeatures << std::endl;
+
         //bool homographyFound = ImageTransformation::findHomography(sourceKp, resKpReal, matches, correctMatches, homography);
 
         // Some simple stat:
@@ -153,7 +155,7 @@ bool performEstimation
         s.totalKeypoints = resKpReal.size();
         s.consumedTimeMs = (end - start) * toMsMul;
         s.precision = correctMatches / (float) matchesCount;
-        s.recall = correctMatches / (float) visibleFeatures;
+        s.recall = correctMatches / (float) visibleFeatures; // correctMatches + 
 
         
         // Compute matching statistics

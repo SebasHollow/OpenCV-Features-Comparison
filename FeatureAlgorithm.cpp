@@ -1,4 +1,5 @@
 #include "FeatureAlgorithm.hpp"
+#include "opencv2/xfeatures2d.hpp"
 #include <cassert>
 
 static cv::Ptr<cv::flann::IndexParams> indexParamsForDescriptorType(int descriptorType, int defaultNorm)
@@ -48,8 +49,9 @@ FeatureAlgorithm::FeatureAlgorithm(const std::string& n, cv::Ptr<cv::Feature2D> 
 bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
 {
     assert(!image.empty());
-    featureEngine->detect(image, kp);
-
+    cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
+    surf_detector->detect(image, kp);
+    
     if (kp.empty())
         return false;
 
