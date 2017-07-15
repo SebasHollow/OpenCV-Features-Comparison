@@ -95,6 +95,9 @@ int main(int argc, const char* argv[])
 
         std::ofstream precisionLog("Precision.txt");
         fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
+
+        std::ofstream performanceLog("Performance.txt");
+        fullStat.printPerformanceStatistics(performanceLog);
     }
 
     return 0;
