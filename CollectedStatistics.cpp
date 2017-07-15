@@ -38,6 +38,8 @@ FrameMatchingStatistics::FrameMatchingStatistics()
     consumedTimeMs = 0;
     homographyError = std::numeric_limits<float>::max();
     isValid = false;
+    alg = "";
+    trans = "";
 }
 
 
@@ -75,26 +77,25 @@ bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value
         case StatisticsElementPatternLocalization:
             value = patternLocalization();
             return true;
-
-        case StatisticsElementPrecision:
-            value = precision;
-            return true;
-
-        case StatisticsElementRecall:
-            value = recall;
-            return true;
         default:
             return false;
     }
 }
 
+void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans){
+    alg = this->alg;
+    trans = this->trans;
+}
+
 std::ostream& FrameMatchingStatistics::writeElement(std::ostream& str, StatisticElement elem) const
 {
     float value;
+    std::string alg, trans;
+    getAlgTransInfo(alg, trans);
     
     if (tryGetValue(elem, value))
     {
-        str << value << tab;
+        str << alg << tab << trans << tab << value << tab;
     }
     else
     {

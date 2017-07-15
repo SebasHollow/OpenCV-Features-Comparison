@@ -95,6 +95,8 @@ bool performEstimation
         // Initialize required fields
         s.isValid        = resKpReal.size() > 0;
         s.argumentValue  = arg;
+        s.alg            = alg.name;
+        s.trans          = transformation.name;
         
         if (!s.isValid)
             continue;

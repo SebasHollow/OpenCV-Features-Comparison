@@ -26,6 +26,9 @@ struct FrameMatchingStatistics
 {
     FrameMatchingStatistics();
 
+    std::string alg;
+    std::string trans;
+
     int totalKeypoints;
 
     float argumentValue;
