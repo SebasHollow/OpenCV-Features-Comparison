@@ -77,12 +77,19 @@ bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value
         case StatisticsElementPatternLocalization:
             value = patternLocalization();
             return true;
+        case StatisticsElementPrecision:
+            value = precision;
+            return true;
+
+        case StatisticsElementRecall:
+            value = recall;
+            return true;
         default:
             return false;
     }
 }
 
-void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans){
+void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans) const{
     alg = this->alg;
     trans = this->trans;
 }
@@ -92,14 +99,14 @@ std::ostream& FrameMatchingStatistics::writeElement(std::ostream& str, Statistic
     float value;
     std::string alg, trans;
     getAlgTransInfo(alg, trans);
-    
+
     if (tryGetValue(elem, value))
     {
-        str << alg << tab << trans << tab << value << tab;
+        str << alg << tab << trans << tab << value << std::endl;
     }
     else
     {
-        str << null << tab;
+        str << alg << tab << trans << tab << null << std::endl;
     }
 
     return str;
@@ -195,30 +202,31 @@ std::ostream& CollectedStatistics::printStatistics(std::ostream& str, StatisticE
 
     for (CollectedStatistics::OuterGroupLine::const_iterator tIter = report.begin(); tIter != report.end(); ++tIter)
     {
-        std::string transformationName = tIter->first;
-        str << quote(transformationName) << std::endl;
+        //std::string transformationName = tIter->first;
+        //str << quote(transformationName) << std::endl;
 
         const GroupedByArgument& inner = tIter->second;
 
-        str << "Argument" << tab;
-        for (size_t i=0; i<inner.algorithms.size(); i++)
-        {
-            str << quote(inner.algorithms[i]) << tab;
-        }
-        str << std::endl;
+        //str << "Argument" << tab;
+        // for (size_t i=0; i<inner.algorithms.size(); i++)
+        // {
+        //     str << quote(inner.algorithms[i]) << tab;
+        // }
+        // str << std::endl;
 
         for (size_t i=0; i<inner.lines.size();i++)
         {
             const Line& l = inner.lines[i];
-            str << l.argument << tab;
+            //str << l.argument << tab;
 
             for (size_t j=0; j< l.stats.size(); j++)
             {
+                str << l.argument << tab;
                 const FrameMatchingStatistics& item = *l.stats[j];
                 item.writeElement(str, elem);
             }
 
-            str << std::endl;
+            //str << std::endl;
         }
     }
 

@@ -50,6 +50,7 @@ struct FrameMatchingStatistics
     inline float patternLocalization() const { return correctMatchesPercent * percentOfMatches * (1.0f - homographyError); }
     
     std::ostream& writeElement(std::ostream& str, StatisticElement elem) const;
+    void getAlgTransInfo(std::string& alg, std::string& trans) const;
     bool tryGetValue(StatisticElement element, float& value) const;
 };
 
