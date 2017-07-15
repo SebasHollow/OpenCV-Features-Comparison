@@ -20,6 +20,7 @@
 #include <fstream>
 
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
+namespace fs = boost::filesystem;
 
 int main(int argc, const char* argv[])
 {
@@ -59,46 +60,51 @@ int main(int argc, const char* argv[])
         std::cout << "At least one input image should be passed" << std::endl;
     }
 
-    for (int imageIndex = 1; imageIndex < argc; imageIndex++)
-    {
-        std::string testImagePath(argv[imageIndex]);
-        cv::Mat testImage = cv::imread(testImagePath);
+    std::string testImagePath;
+    fs::path srcDir(argv[1]);
+    fs::directory_iterator it(srcDir), eod;
+    BOOST_FOREACH(fs::path const & testImagePath, std::make_pair(it, eod)) {
+        std::string testImageName = testImagePath.filename().string();
+        if (fs::is_regular_file(testImagePath) && testImageName[0] != '.') {
+            std::cout << "Testing " << testImageName << std::endl;
+            
+            cv::Mat testImage = cv::imread(testImagePath.string());
 
-        CollectedStatistics fullStat;
+            CollectedStatistics fullStat;
 
-        if (testImage.empty())
-        {
-            std::cout << "Cannot read image from " << testImagePath << std::endl;
-        }
-
-        for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
-        {
-            const FeatureAlgorithm& alg   = algorithms[algIndex];
-
-            std::cout << "Testing " << alg.name << "...";
-
-            for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
+            if (testImage.empty())
             {
-                const ImageTransformation& trans = *transformations[transformIndex].get();
-
-                performEstimation(alg, trans, testImage.clone(), fullStat.getStatistics(alg.name, trans.name));
+                std::cout << "Cannot read image from " << testImagePath << std::endl;
             }
 
-            std::cout << "done." << std::endl;
+            for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
+            {
+                const FeatureAlgorithm& alg   = algorithms[algIndex];
+
+                std::cout << "Testing " << alg.name << "...";
+
+                for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
+                {
+                    const ImageTransformation& trans = *transformations[transformIndex].get();
+
+                    performEstimation(alg, trans, testImage.clone(), fullStat.getStatistics(alg.name, trans.name));
+                }
+
+                std::cout << "done." << std::endl;
+            }
+
+            fullStat.printAverage(std::cout, StatisticsElementRecall);
+            fullStat.printAverage(std::cout, StatisticsElementPrecision);
+
+            std::ofstream recallLog("Recall.txt");
+            fullStat.printStatistics(recallLog, StatisticsElementRecall);
+
+            std::ofstream precisionLog("Precision.txt");
+            fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
+
+            std::ofstream performanceLog("Performance.txt");
+            fullStat.printPerformanceStatistics(performanceLog);
         }
-
-        fullStat.printAverage(std::cout, StatisticsElementRecall);
-        fullStat.printAverage(std::cout, StatisticsElementPrecision);
-
-
-        std::ofstream recallLog("Recall.txt");
-        fullStat.printStatistics(recallLog, StatisticsElementRecall);
-
-        std::ofstream precisionLog("Precision.txt");
-        fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
-
-        std::ofstream performanceLog("Performance.txt");
-        fullStat.printPerformanceStatistics(performanceLog);
     }
 
     return 0;
