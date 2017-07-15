@@ -202,22 +202,10 @@ std::ostream& CollectedStatistics::printStatistics(std::ostream& str, StatisticE
 
     for (CollectedStatistics::OuterGroupLine::const_iterator tIter = report.begin(); tIter != report.end(); ++tIter)
     {
-        //std::string transformationName = tIter->first;
-        //str << quote(transformationName) << std::endl;
-
         const GroupedByArgument& inner = tIter->second;
-
-        //str << "Argument" << tab;
-        // for (size_t i=0; i<inner.algorithms.size(); i++)
-        // {
-        //     str << quote(inner.algorithms[i]) << tab;
-        // }
-        // str << std::endl;
-
         for (size_t i=0; i<inner.lines.size();i++)
         {
             const Line& l = inner.lines[i];
-            //str << l.argument << tab;
 
             for (size_t j=0; j< l.stats.size(); j++)
             {
@@ -225,8 +213,6 @@ std::ostream& CollectedStatistics::printStatistics(std::ostream& str, StatisticE
                 const FrameMatchingStatistics& item = *l.stats[j];
                 item.writeElement(str, elem);
             }
-
-            //str << std::endl;
         }
     }
 
