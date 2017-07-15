@@ -11,8 +11,6 @@ typedef std::vector<cv::DMatch>   Matches;
 class FeatureAlgorithm
 {
 public:
-    explicit FeatureAlgorithm(const std::string& name, cv::Ptr<cv::FeatureDetector> d, cv::Ptr<cv::DescriptorExtractor> e, bool useBruteForceMather);
-
     explicit FeatureAlgorithm(const std::string& name, cv::Ptr<cv::Feature2D> featureEngine, bool useBruteForceMather);
 
     //! Human-friendly name of detection/extraction/matcher combination.
@@ -23,6 +21,9 @@ public:
 
     //! Extracts feature points and compute descriptors from given image.
     bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const;
+
+    //! Extracts feature points and compute descriptors from given image and measure the time consumed for computing the features.
+    bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const;
 
     //! Finds correspondences using regular match.
     void matchFeatures(const Descriptors& train, const Descriptors& query, Matches& matches) const;

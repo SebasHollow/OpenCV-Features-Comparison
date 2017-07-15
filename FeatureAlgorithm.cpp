@@ -19,21 +19,12 @@ static cv::Ptr<cv::flann::IndexParams> indexParamsForDescriptorType(int descript
 
 cv::Ptr<cv::DescriptorMatcher> matcherForDescriptorType(int descriptorType, int defaultNorm, bool bruteForce)
 {
-    if (bruteForce)
+    if (bruteForce) {
         return cv::Ptr<cv::DescriptorMatcher>(new cv::BFMatcher(defaultNorm, true));
-    else
+    }
+    else {
         return  cv::Ptr<cv::DescriptorMatcher>(new cv::FlannBasedMatcher(indexParamsForDescriptorType(descriptorType, defaultNorm)));
-}
-
-FeatureAlgorithm::FeatureAlgorithm(const std::string& n, cv::Ptr<cv::FeatureDetector> d, cv::Ptr<cv::DescriptorExtractor> e, bool useBruteForceMather)
-: name(n)
-, knMatchSupported(false)
-, detector(d)
-, extractor(e)
-, matcher(matcherForDescriptorType(e->descriptorSize(), e->defaultNorm(), useBruteForceMather))
-{
-    CV_Assert(d);
-    CV_Assert(e);
+    }
 }
 
 FeatureAlgorithm::FeatureAlgorithm(const std::string& n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather)
@@ -51,13 +42,28 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
     surf_detector->detect(image, kp);
-    
+
     if (kp.empty())
         return false;
 
     featureEngine->compute(image, kp, desc);
-    
-    
+
+    return kp.size() > 0;
+}
+
+bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const
+{
+    assert(!image.empty());
+    cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
+    surf_detector->detect(image, kp);
+
+    if (kp.empty())
+        return false;
+
+    start = cv::getTickCount();
+    featureEngine->compute(image, kp, desc);
+    end = cv::getTickCount();
+
     return kp.size() > 0;
 }
 

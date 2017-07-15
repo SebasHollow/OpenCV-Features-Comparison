@@ -88,9 +88,9 @@ bool performEstimation
         }
         cv::Mat expectedHomography = transformation.getHomography(arg, gray);
                 
-        int64 start = cv::getTickCount();
+        int64 start, end;
         
-        alg.extractFeatures(transformedImage, resKpReal, resDesc);
+        alg.extractFeatures(transformedImage, resKpReal, resDesc, start, end);
 
         // Initialize required fields
         s.isValid        = resKpReal.size() > 0;
@@ -100,8 +100,6 @@ bool performEstimation
             continue;
 
         alg.matchFeatures(sourceDesc, resDesc, matches);
-
-        int64 end = cv::getTickCount();
 
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
         cv::KeyPoint::convert(sourceKp, sourcePoints);
@@ -139,7 +137,7 @@ bool performEstimation
         {
             cv::Point2f expected = sourcePointsInFrame[matches[i].trainIdx];
             cv::Point2f actual   = resKpReal[matches[i].queryIdx].pt;
-            
+
             if (distance(expected, actual) < 3.0)
             {
                 correctMatches++;
