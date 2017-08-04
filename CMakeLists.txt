@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project( Testing )
 set(CMAKE_BUILD_TYPE Debug)
-SET(OpenCV_DIR "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/opencv/share/OpenCV")
+SET(OpenCV_DIR "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib2/share/OpenCV")
 SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/boost" "/vol/home/s1459929/Dropbox/CS1516/Thesislib/opencv/include")
 SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/boost/stage/lib" "/vol/home/s1459929/Dropbox/CS1516/Thesis/lib/opencv/lib")
 include(CheckCXXCompilerFlag)
