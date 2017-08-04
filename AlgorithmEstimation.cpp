@@ -89,14 +89,16 @@ bool performEstimation
         cv::Mat expectedHomography = transformation.getHomography(arg, gray);
                 
         int64 start, end;
+        size_t memoryAllocated;
         
-        alg.extractFeatures(transformedImage, resKpReal, resDesc, start, end);
+        alg.extractFeatures(transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
 
         // Initialize required fields
         s.isValid        = resKpReal.size() > 0;
         s.argumentValue  = arg;
         s.alg            = alg.name;
         s.trans          = transformation.name;
+        s.memoryAllocated = memoryAllocated;
         
         if (!s.isValid)
             continue;

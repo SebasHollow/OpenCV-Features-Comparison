@@ -18,7 +18,8 @@ typedef enum
     StatisticsElementPatternLocalization,
     StatisticsElementAverageReprojectionError,
     StatisticsElementRecall,
-    StatisticsElementPrecision
+    StatisticsElementPrecision,
+    StatisticsElementMemoryAllocated
 
 } StatisticElement;
 
@@ -38,6 +39,7 @@ struct FrameMatchingStatistics
     float stdDevDistance;
     float correctMatchesPercent;
     float homographyError;
+    size_t memoryAllocated;
 
     float recall;
     float precision;

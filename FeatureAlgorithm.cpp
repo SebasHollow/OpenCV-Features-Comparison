@@ -51,7 +51,7 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     return kp.size() > 0;
 }
 
-bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const
+bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
 {
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
@@ -60,9 +60,11 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     if (kp.empty())
         return false;
 
+    cv::clearMemoryAllocated();
     start = cv::getTickCount();
     featureEngine->compute(image, kp, desc);
     end = cv::getTickCount();
+    memoryAllocated = cv::getAmountOfMemoryAllocated();
 
     return kp.size() > 0;
 }

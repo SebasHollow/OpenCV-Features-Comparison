@@ -23,7 +23,7 @@ public:
     bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const;
 
     //! Extracts feature points and compute descriptors from given image and measure the time consumed for computing the features.
-    bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const;
+    bool extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const;
 
     //! Finds correspondences using regular match.
     void matchFeatures(const Descriptors& train, const Descriptors& query, Matches& matches) const;

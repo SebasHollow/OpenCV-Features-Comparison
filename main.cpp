@@ -28,7 +28,7 @@ int main(int argc, const char* argv[])
     std::vector<cv::Ptr<ImageTransformation> > transformations;
 
     bool useBF = true;
-
+    cv::fastMalloc(2);
     // Initialize list of algorithm tuples:
 
     algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
@@ -37,6 +37,7 @@ int main(int argc, const char* argv[])
     algorithms.push_back(FeatureAlgorithm("BRISK", cv::BRISK::create(), useBF));
     algorithms.push_back(FeatureAlgorithm("SURF",  cv::xfeatures2d::SURF::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("FREAK",  cv::xfeatures2d::FREAK::create(),  useBF));
+    algorithms.push_back(FeatureAlgorithm("SIFT",  cv::xfeatures2d::SIFT::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("BRIEF",  cv::xfeatures2d::BriefDescriptorExtractor::create(),  useBF));
 
     // Initialize list of used transformations:
@@ -79,6 +80,7 @@ int main(int argc, const char* argv[])
 
             for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
             {
+                cv::clearMemoryAllocated();
                 const FeatureAlgorithm& alg   = algorithms[algIndex];
 
                 std::cout << "Testing " << alg.name << "...";
@@ -104,6 +106,9 @@ int main(int argc, const char* argv[])
 
             std::ofstream performanceLog("Performance.txt");
             fullStat.printPerformanceStatistics(performanceLog);
+
+            std::ofstream memoryAllocatedLog("MemoryAllocated.txt");
+            fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
         }
     }
 

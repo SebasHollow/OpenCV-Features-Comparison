@@ -38,6 +38,7 @@ FrameMatchingStatistics::FrameMatchingStatistics()
     consumedTimeMs = 0;
     homographyError = std::numeric_limits<float>::max();
     isValid = false;
+    memoryAllocated = 0;
     alg = "";
     trans = "";
 }
@@ -80,7 +81,9 @@ bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value
         case StatisticsElementPrecision:
             value = precision;
             return true;
-
+        case StatisticsElementMemoryAllocated:
+            value = memoryAllocated;
+            return true;
         case StatisticsElementRecall:
             value = recall;
             return true;
