@@ -80,7 +80,6 @@ public:
     typedef std::map<std::string, InnerGroup>                 OuterGroup;
     typedef std::map<std::string, GroupedByArgument>          OuterGroupLine;
 
-
     SingleRunStatistics& getStatistics(std::string algorithmName, std::string transformationName);
 
     OuterGroup groupByAlgorithmThenByTransformation() const;

@@ -79,13 +79,15 @@ bool performEstimation
         cv::Mat     transformedImage;
         transformation.transform(arg, gray, transformedImage);
 
-        if (0)
+        if (1)
         {
-            std::ostringstream image_name;
-            image_name << "image_dump_" << transformation.name << "_" << i << ".bin";
-            std::ofstream dump(image_name.str().c_str(), std::ios::binary);
-            std::copy(transformedImage.datastart, transformedImage.dataend, std::ostream_iterator<uint8_t>(dump));
+            //std::ostringstream image_name;
+            cv::imwrite("Destination/" + transformation.name + std::to_string(i) + ".png", transformedImage);
+            // image_name << "image_dump_" << transformation.name << "_" << i << ".bin";
+            // std::ofstream dump(image_name.str().c_str(), std::ios::binary);
+            // std::copy(transformedImage.datastart, transformedImage.dataend, std::ostream_iterator<uint8_t>(dump));
         }
+
         cv::Mat expectedHomography = transformation.getHomography(arg, gray);
                 
         int64 start, end;

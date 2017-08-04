@@ -32,8 +32,6 @@ int main(int argc, const char* argv[])
     // Initialize list of algorithm tuples:
 
     algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
-    //algorithms.push_back(FeatureAlgorithm("AKAZE", cv::KAZE::create(), useBF));
-    //algorithms.push_back(FeatureAlgorithm("KAZE",  cv::Feature2D::create("KAZE"),  useBF));
     algorithms.push_back(FeatureAlgorithm("BRISK", cv::BRISK::create(), useBF));
     algorithms.push_back(FeatureAlgorithm("SURF",  cv::xfeatures2d::SURF::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("FREAK",  cv::xfeatures2d::FREAK::create(),  useBF));
@@ -47,6 +45,7 @@ int main(int argc, const char* argv[])
         transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 1)));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 1, cv::Point2f(0.5f, 0.5f))));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.01f)));
+        transformations.push_back(cv::Ptr<ImageTransformation>(new PerspectiveTransform(10)));
     }
     else
     {
@@ -54,6 +53,7 @@ int main(int argc, const char* argv[])
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 10, cv::Point2f(0.5f, 0.5f))));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.1f)));
         transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 10)));
+        transformations.push_back(cv::Ptr<ImageTransformation>(new PerspectiveTransform(10)));
     }
 
     if (argc < 2)
