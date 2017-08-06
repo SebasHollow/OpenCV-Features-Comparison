@@ -11,9 +11,11 @@ bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistanc
 void ratioTest(const std::vector<Matches>& knMatches, float maxRatio, Matches& goodMatches);
 
 bool performEstimation(const FeatureAlgorithm& alg,
-  const ImageTransformation& transformation,
-  const cv::Mat& sourceImage,
-  SingleRunStatistics& stat);
+                       const ImageTransformation& transformation,
+                       const cv::Mat& sourceImage,
+                       const Keypoints& sourceKp,
+                       const Descriptors& sourceDesc,
+                       SingleRunStatistics& stat);
 
 
 #endif

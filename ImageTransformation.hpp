@@ -56,6 +56,48 @@ private:
     std::vector<float> m_args;
 };
 
+class ImageYRotationTransformation : public ImageTransformation
+{
+public:
+    ImageYRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace);
+    
+    virtual std::vector<float> getX() const;
+    
+    virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
+    
+    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+
+private:
+    float m_startAngleInDeg;
+    float m_endAngleInDeg;
+    float m_step;
+    
+    cv::Point2f m_rotationCenterInUnitSpace;
+    
+    std::vector<float> m_args;
+};
+
+class ImageXRotationTransformation : public ImageTransformation
+{
+public:
+    ImageXRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace);
+    
+    virtual std::vector<float> getX() const;
+    
+    virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
+    
+    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+
+private:
+    float m_startAngleInDeg;
+    float m_endAngleInDeg;
+    float m_step;
+    
+    cv::Point2f m_rotationCenterInUnitSpace;
+    
+    std::vector<float> m_args;
+};
+
 class ImageScalingTransformation : public ImageTransformation
 {
 public:
@@ -157,6 +199,7 @@ private:
     float m_step;
     
     std::vector<float>   m_args;
+
     std::vector<cv::Mat> m_homographies;
 };
 

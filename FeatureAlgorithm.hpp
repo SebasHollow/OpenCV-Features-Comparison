@@ -31,6 +31,7 @@ public:
     //! KNN match features.
     void matchFeatures(const Descriptors& train, const Descriptors& query, int k, std::vector<Matches>& matches) const;
 
+    Descriptors getDescriptors(const cv::Mat& image, Keypoints& kp) const;
 
 private:
     cv::Ptr<cv::Feature2D>           featureEngine;

@@ -69,6 +69,13 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     return kp.size() > 0;
 }
 
+Descriptors FeatureAlgorithm::getDescriptors(const cv::Mat& image, Keypoints& kp) const
+{
+    Descriptors desc;
+    featureEngine->compute(image, kp, desc);
+    return desc;
+}
+
 void FeatureAlgorithm::matchFeatures(const Descriptors& train, const Descriptors& query, Matches& matches) const
 {
     matcher->match(query, train, matches);

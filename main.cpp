@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
+#include <cassert>
 
 const bool USE_VERBOSE_TRANSFORMATIONS = false;
 namespace fs = boost::filesystem;
@@ -28,7 +29,7 @@ int main(int argc, const char* argv[])
     std::vector<cv::Ptr<ImageTransformation> > transformations;
 
     bool useBF = true;
-    cv::fastMalloc(2);
+
     // Initialize list of algorithm tuples:
 
     algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
@@ -37,6 +38,9 @@ int main(int argc, const char* argv[])
     algorithms.push_back(FeatureAlgorithm("FREAK",  cv::xfeatures2d::FREAK::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("SIFT",  cv::xfeatures2d::SIFT::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("BRIEF",  cv::xfeatures2d::BriefDescriptorExtractor::create(),  useBF));
+    algorithms.push_back(FeatureAlgorithm("LATCH",  cv::xfeatures2d::LATCH::create(),  useBF));
+    algorithms.push_back(FeatureAlgorithm("VGG",  cv::xfeatures2d::VGG::create(),  useBF));
+
 
     // Initialize list of used transformations:
     if (USE_VERBOSE_TRANSFORMATIONS)
@@ -45,7 +49,9 @@ int main(int argc, const char* argv[])
         transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 1)));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 1, cv::Point2f(0.5f, 0.5f))));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.01f)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new PerspectiveTransform(10)));
+        cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+        cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+        transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
     }
     else
     {
@@ -53,14 +59,19 @@ int main(int argc, const char* argv[])
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 10, cv::Point2f(0.5f, 0.5f))));
         transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.1f)));
         transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 10)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new PerspectiveTransform(10)));
+        cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+        cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+        transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
     }
 
     if (argc < 2)
     {
-        std::cout << "At least one input image should be passed" << std::endl;
+        std::cout << "At least one input folder should be passed" << std::endl;
     }
-
+    Keypoints sourceKp;
+    Descriptors sourceDesc;
+    cv::Mat sourceImage;
+    cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
     std::string testImagePath;
     fs::path srcDir(argv[1]);
     fs::directory_iterator it(srcDir), eod;
@@ -68,9 +79,25 @@ int main(int argc, const char* argv[])
         std::string testImageName = testImagePath.filename().string();
         if (fs::is_regular_file(testImagePath) && testImageName[0] != '.') {
             std::cout << "Testing " << testImageName << std::endl;
-            
-            cv::Mat testImage = cv::imread(testImagePath.string());
 
+            cv::Mat fullTestImage = cv::imread(testImagePath.string());
+
+            cv::Mat testImage;
+
+            if (fullTestImage.channels() == 3)
+            {
+                cv::cvtColor(fullTestImage, testImage, cv::COLOR_BGR2GRAY);
+            }
+            else if (fullTestImage.channels() == 4)
+            {
+                cv::cvtColor(fullTestImage, testImage, cv::COLOR_BGRA2GRAY);
+            }
+            else if (fullTestImage.channels() == 1)
+            {
+                testImage = fullTestImage;
+            }
+
+            surf_detector->detect(testImage, sourceKp);
             CollectedStatistics fullStat;
 
             if (testImage.empty())
@@ -82,18 +109,20 @@ int main(int argc, const char* argv[])
             {
                 cv::clearMemoryAllocated();
                 const FeatureAlgorithm& alg   = algorithms[algIndex];
-
+                Keypoints tempKp = sourceKp;
+                sourceDesc = alg.getDescriptors(testImage, tempKp);
                 std::cout << "Testing " << alg.name << "...";
 
                 for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
                 {
                     const ImageTransformation& trans = *transformations[transformIndex].get();
-
-                    performEstimation(alg, trans, testImage.clone(), fullStat.getStatistics(alg.name, trans.name));
+                    performEstimation(alg, trans, testImage.clone(), tempKp, sourceDesc, fullStat.getStatistics(alg.name, trans.name));
                 }
-
+                sourceDesc.release();
                 std::cout << "done." << std::endl;
             }
+
+            sourceKp.clear();
 
             fullStat.printAverage(std::cout, StatisticsElementRecall);
             fullStat.printAverage(std::cout, StatisticsElementPrecision);
