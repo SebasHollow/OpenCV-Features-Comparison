@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iterator>
 #include <cstdint>
+#include <omp.h>
 
 bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev)
 {
@@ -39,7 +40,6 @@ bool performEstimation
     std::vector<FrameMatchingStatistics>& stat
 )
 {
-    //
 
 // Keypoints   sourceKp;
 //     Descriptors sourceDesc;
@@ -76,9 +76,10 @@ bool performEstimation
     // To convert ticks to milliseconds
     const double toMsMul = 1000. / cv::getTickFrequency();
 
-    //#pragma omp parallel for private(resKpReal, resDesc, matches) schedule(dynamic, 5)
+    #pragma omp parallel for private(resKpReal, resDesc, matches) schedule(dynamic, 10)
     for (int i = 0; i < count; i++)
     {
+        //std::cout << "Threads: " << omp_get_num_threads() << std::endl;
         float       arg = x[i];
         FrameMatchingStatistics& s = stat[i];
 
@@ -150,7 +151,7 @@ bool performEstimation
             cv::Point2f expected = sourcePointsInFrame[matches[i].trainIdx];
             cv::Point2f actual   = resKpReal[matches[i].queryIdx].pt;
 
-            if (distance(expected, actual) < 3.0)
+            if (distance(expected, actual) < .05)
             {
                 correctMatches++;
             }
@@ -166,7 +167,6 @@ bool performEstimation
         s.consumedTimeMs = (end - start) * toMsMul;
         s.precision = correctMatches / (float) matchesCount;
         s.recall = correctMatches / (float) visibleFeatures; // correctMatches +
-
 
         // Compute matching statistics
         //if (homographyFound)

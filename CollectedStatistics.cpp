@@ -32,7 +32,7 @@ FrameMatchingStatistics::FrameMatchingStatistics()
     ratioTestFalseLevel = 0;
     meanDistance = 0;
     stdDevDistance = 0;
-    correctMatchesPercent = 0;
+    matchingRatio = 0;
     recall = 0;
     precision = 0;
     consumedTimeMs = 0;
@@ -48,51 +48,60 @@ bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value
 {
     if (!isValid)
         return false;
-    
+
     switch (element)
     {
-        case  StatisticsElementPointsCount:
-            value = totalKeypoints;
-            return true;
-            
-        case StatisticsElementPercentOfCorrectMatches:
-            value = correctMatchesPercent * 100;
-            return true;
-            
-        case StatisticsElementPercentOfMatches:
-            value = percentOfMatches * 100;
-            return true;
-            
-        case StatisticsElementMeanDistance:
-            value = meanDistance;
-            return true;
-            
-        case StatisticsElementHomographyError:
-            value = homographyError;
-            return true;
-            
-        case StatisticsElementMatchingRatio:
-            value = matchingRatio();
-            return true;
-            
-        case StatisticsElementPatternLocalization:
-            value = patternLocalization();
-            return true;
-        case StatisticsElementPrecision:
-            value = precision;
-            return true;
-        case StatisticsElementMemoryAllocated:
-            value = memoryAllocated;
-            return true;
-        case StatisticsElementRecall:
-            value = recall;
-            return true;
-        default:
-            return false;
+    case  StatisticsElementPointsCount:
+        value = totalKeypoints;
+        return true;
+
+    case StatisticsElementPercentOfCorrectMatches:
+        //value = correctMatchesPercent * 100;
+        return false;
+
+    case StatisticsElementPercentOfMatches:
+        value = percentOfMatches * 100;
+        return true;
+
+    case StatisticsElementMeanDistance:
+        value = meanDistance;
+        return true;
+
+    case StatisticsElementHomographyError:
+        value = homographyError;
+        return true;
+
+    case StatisticsElementMatchingRatio:
+        value = matchingRatio;
+        return true;
+
+    case StatisticsElementPatternLocalization:
+        //value = patternLocalization();
+        return false;
+    case StatisticsElementPrecision:
+        value = precision;
+        return true;
+    case StatisticsElementMemoryAllocated:
+        value = memoryAllocated;
+        return true;
+    case StatisticsElementConsumedTimeMs:
+        value = consumedTimeMs;
+        return true;
+    case StatisticsElementConsumedTimeMsPerDescriptor:
+        value = consumedTimeMs / totalKeypoints;
+        return true;
+    case StatisticsElementMemoryAllocatedPerDescriptor:
+        value = memoryAllocated / totalKeypoints;
+        return true;
+    case StatisticsElementRecall:
+        value = recall;
+        return true;
+    default:
+        return false;
     }
 }
 
-void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans) const{
+void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans) const {
     alg = this->alg;
     trans = this->trans;
 }
@@ -164,7 +173,7 @@ CollectedStatistics::OuterGroupLine CollectedStatistics::groupByTransformationTh
         const SingleRunStatistics& firstStat = *statitics.front();
         int argumentsCount = firstStat.size();
 
-        for (int i=0; i < argumentsCount; i++)
+        for (int i = 0; i < argumentsCount; i++)
         {
             Line l;
             l.argument = firstStat[i].argumentValue;
@@ -188,14 +197,14 @@ std::ostream& CollectedStatistics::printAverage(std::ostream& str, StatisticElem
 {
     OuterGroup result;
     str << "Average" << std::endl;
-    
+
     for (std::map<Key, SingleRunStatistics>::const_iterator i = m_allStats.begin(); i != m_allStats.end(); ++i)
     {
         result[i->first.second][i->first.first] = &(i->second);
-        
+
         str << i->first.first << tab << i->first.second << tab << average(i->second, elem) << std::endl;
     }
-    
+
     return str;
 }
 
@@ -206,11 +215,11 @@ std::ostream& CollectedStatistics::printStatistics(std::ostream& str, StatisticE
     for (CollectedStatistics::OuterGroupLine::const_iterator tIter = report.begin(); tIter != report.end(); ++tIter)
     {
         const GroupedByArgument& inner = tIter->second;
-        for (size_t i=0; i<inner.lines.size();i++)
+        for (size_t i = 0; i < inner.lines.size(); i++)
         {
             const Line& l = inner.lines[i];
 
-            for (size_t j=0; j< l.stats.size(); j++)
+            for (size_t j = 0; j < l.stats.size(); j++)
             {
                 str << l.argument << tab;
                 const FrameMatchingStatistics& item = *l.stats[j];
@@ -239,7 +248,7 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
         for (CollectedStatistics::InnerGroup::const_iterator tIter = alg->second.begin(); tIter != alg->second.end(); ++tIter)
         {
             const SingleRunStatistics& runStatistics = *tIter->second;
-            for (size_t i=0; i<runStatistics.size(); i++)
+            for (size_t i = 0; i < runStatistics.size(); i++)
             {
                 if (runStatistics[i].isValid)
                 {
@@ -263,18 +272,18 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
 float average(const SingleRunStatistics& statistics, StatisticElement element)
 {
     std::vector<float> scores;
-    
-    for (size_t i = 0; i< statistics.size(); i++)
+
+    for (size_t i = 0; i < statistics.size(); i++)
     {
         float value;
         bool valid = statistics[i].tryGetValue(element, value);
-        
+
         if (valid)
         {
             scores.push_back(value);
         }
     }
-    
+
     float sum     = std::accumulate(scores.begin(), scores.end(), 0.0f);
     float average = sum / scores.size();
     return average;
@@ -283,20 +292,20 @@ float average(const SingleRunStatistics& statistics, StatisticElement element)
 float maximum(const SingleRunStatistics& statistics, StatisticElement element)
 {
     std::vector<float> scores;
-    
-    for (size_t i = 0; i< statistics.size(); i++)
+
+    for (size_t i = 0; i < statistics.size(); i++)
     {
         float value;
         bool valid = statistics[i].tryGetValue(element, value);
-        
+
         if (valid)
         {
             scores.push_back(value);
         }
     }
-    
+
     assert(!scores.empty());
-    
+
     float max = *std::max_element(scores.begin(), scores.end());
     return max;
 }

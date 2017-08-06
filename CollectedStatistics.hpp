@@ -7,7 +7,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-typedef enum 
+typedef enum
 {
     StatisticsElementPointsCount,
     StatisticsElementPercentOfCorrectMatches,
@@ -19,8 +19,10 @@ typedef enum
     StatisticsElementAverageReprojectionError,
     StatisticsElementRecall,
     StatisticsElementPrecision,
-    StatisticsElementMemoryAllocated
-
+    StatisticsElementMemoryAllocated,
+    StatisticsElementConsumedTimeMs,
+    StatisticsElementConsumedTimeMsPerDescriptor,
+    StatisticsElementMemoryAllocatedPerDescriptor
 } StatisticElement;
 
 struct FrameMatchingStatistics
@@ -37,7 +39,7 @@ struct FrameMatchingStatistics
     float ratioTestFalseLevel;
     float meanDistance;
     float stdDevDistance;
-    float correctMatchesPercent;
+    float matchingRatio;
     float homographyError;
     size_t memoryAllocated;
 
@@ -48,9 +50,9 @@ struct FrameMatchingStatistics
     cv::Scalar reprojectionError;
     bool   isValid;
 
-    inline float matchingRatio()       const { return correctMatchesPercent * percentOfMatches * 100.0f; };
-    inline float patternLocalization() const { return correctMatchesPercent * percentOfMatches * (1.0f - homographyError); }
-    
+    // inline float matchingRatio()       const { return matchingRatio * percentOfMatches * 100.0f; };
+    // inline float patternLocalization() const { return matchingRatio * percentOfMatches * (1.0f - homographyError); }
+
     std::ostream& writeElement(std::ostream& str, StatisticElement elem) const;
     void getAlgTransInfo(std::string& alg, std::string& trans) const;
     bool tryGetValue(StatisticElement element, float& value) const;

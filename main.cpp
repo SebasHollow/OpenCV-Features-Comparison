@@ -39,30 +39,17 @@ int main(int argc, const char* argv[])
     algorithms.push_back(FeatureAlgorithm("SIFT",  cv::xfeatures2d::SIFT::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("BRIEF",  cv::xfeatures2d::BriefDescriptorExtractor::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("LATCH",  cv::xfeatures2d::LATCH::create(),  useBF));
-    algorithms.push_back(FeatureAlgorithm("VGG",  cv::xfeatures2d::VGG::create(),  useBF));
 
-
-    // Initialize list of used transformations:
-    if (USE_VERBOSE_TRANSFORMATIONS)
-    {
-        transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform(9)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 1)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 1, cv::Point2f(0.5f, 0.5f))));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.01f)));
-        cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-        cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
-    }
-    else
-    {
-        transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform(9)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 360, 10, cv::Point2f(0.5f, 0.5f))));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.1f)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-127, +127, 10)));
-        cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-        cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-        transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
-    }
+    transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform(10)));
+    cv::Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 50, 10, cv::Point2f(0.5f, 0.5f)));
+    transformations.push_back(rotationTransformation);
+    cv::Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.25f));
+    transformations.push_back(scaleTransformation);
+    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(rotationTransformation, scaleTransformation, CombinedTransform::ParamCombinationType::Full)));
+    transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-125, +125, 25)));
+    cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+    cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
+    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
 
     if (argc < 2)
     {
@@ -127,17 +114,26 @@ int main(int argc, const char* argv[])
             fullStat.printAverage(std::cout, StatisticsElementRecall);
             fullStat.printAverage(std::cout, StatisticsElementPrecision);
 
-            std::ofstream recallLog("Recall.txt");
+            std::ofstream recallLog("Statistics/Recall_" + testImageName + ".txt");
             fullStat.printStatistics(recallLog, StatisticsElementRecall);
 
-            std::ofstream precisionLog("Precision.txt");
+            std::ofstream precisionLog("Statistics/Precision_" + testImageName + ".txt");
             fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
 
-            std::ofstream performanceLog("Performance.txt");
-            fullStat.printPerformanceStatistics(performanceLog);
-
-            std::ofstream memoryAllocatedLog("MemoryAllocated.txt");
+            std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated_" + testImageName + ".txt");
             fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
+
+            std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs" + testImageName + ".txt");
+            fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
+
+            std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor_" + testImageName + ".txt");
+            fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
+
+            std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor_" + testImageName + ".txt");
+            fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
+
+            std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints_" + testImageName + ".txt");
+            fullStat.printStatistics(TotalKeypointsLog, StatisticsElementPointsCount);
         }
     }
 

@@ -1,6 +1,6 @@
 #include "ImageTransformation.hpp"
 
-bool ImageTransformation::canTransformKeypoints() const
+bool ImageTransformation::multiplyHomography() const
 {
     return false;
 }
@@ -260,6 +260,11 @@ cv::Mat ImageYRotationTransformation::getHomography(float t, const cv::Mat& sour
     return trans;
 }
 
+bool ImageYRotationTransformation::multiplyHomography() const
+{
+    return true;
+}
+
 #pragma mark - ImageXRotationTransformation implementation
 
 ImageXRotationTransformation::ImageXRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace)
@@ -311,6 +316,11 @@ cv::Mat ImageXRotationTransformation::getHomography(float t, const cv::Mat& sour
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (RX * A1));
     return trans;
+}
+
+bool ImageXRotationTransformation::multiplyHomography() const
+{
+    return true;
 }
 
 #pragma mark - ImageScalingTransformation implementation
@@ -486,16 +496,21 @@ void CombinedTransform::transform(float t, const cv::Mat& source, cv::Mat& resul
     float t1 = m_params[index].first;
     float t2 = m_params[index].second;
 
-    cv::Mat temp;
-    cv::Mat first_homography = m_first->getHomography(t1, source);
-    cv::Mat second_homography = m_second->getHomography(t2, source);
-    cv::Mat combo = first_homography * second_homography;
-    cv::warpPerspective(source, result, combo, source.size(), cv::INTER_LANCZOS4);
+    if (!multiplyHomography()) {
+        cv::Mat temp;
+        m_first->transform(t1, source, temp);
+        m_second->transform(t2, temp, result);
+    } else {
+        cv::Mat first_homography = m_first->getHomography(t1, source);
+        cv::Mat second_homography = m_second->getHomography(t2, source);
+        cv::Mat combo = first_homography * second_homography;
+        cv::warpPerspective(source, result, combo, source.size(), cv::INTER_LANCZOS4);
+    }
 }
 
-bool CombinedTransform::canTransformKeypoints() const
+bool CombinedTransform::multiplyHomography() const
 {
-    return m_first->canTransformKeypoints() && m_second->canTransformKeypoints();
+    return m_first->multiplyHomography() && m_second->multiplyHomography();
 }
 
 void CombinedTransform::transform(float t, const Keypoints& source, Keypoints& result) const
@@ -503,7 +518,6 @@ void CombinedTransform::transform(float t, const Keypoints& source, Keypoints& r
     size_t index = static_cast<size_t>(t);
     float t1 = m_params[index].first;
     float t2 = m_params[index].second;
-    std::cout << "This is called" << std::endl;
     Keypoints temp;
     m_first->transform(t1, source, temp);
     m_second->transform(t2, temp, result);
@@ -516,6 +530,11 @@ cv::Mat CombinedTransform::getHomography(float t, const cv::Mat& source) const
     float t1 = m_params[index].first;
     float t2 = m_params[index].second;
 
+    if (!multiplyHomography()) {
+        cv::Mat temp;
+        m_first->transform(t1, source, temp);
+        return m_second->getHomography(t2, temp) * m_first->getHomography(t1, source);
+    }
     cv::Mat first_homography = m_first->getHomography(t1, source);
     cv::Mat second_homography = m_second->getHomography(t2, source);
     return first_homography * second_homography;

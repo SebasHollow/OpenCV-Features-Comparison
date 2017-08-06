@@ -16,7 +16,7 @@ public:
     
 	virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const = 0;
 
-    virtual bool canTransformKeypoints() const;
+    virtual bool multiplyHomography() const;
     virtual void transform(float t, const Keypoints& source, Keypoints& result) const;
 
     virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
@@ -66,6 +66,7 @@ public:
     virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
     
     virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    virtual bool multiplyHomography() const;
 
 private:
     float m_startAngleInDeg;
@@ -87,6 +88,7 @@ public:
     virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
     
     virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    virtual bool multiplyHomography() const;
 
 private:
     float m_startAngleInDeg;
@@ -166,8 +168,8 @@ public:
 	virtual std::vector<float> getX() const ;
     
 	virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const ;
-    
-    virtual bool canTransformKeypoints() const;
+
+    virtual bool multiplyHomography() const;
     virtual void transform(float t, const Keypoints& source, Keypoints& result) const;
     
     virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
