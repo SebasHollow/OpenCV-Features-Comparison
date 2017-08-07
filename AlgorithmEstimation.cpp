@@ -65,8 +65,8 @@ bool performEstimation
     //
 
     std::vector<float> x = transformation.getX();
-    stat.resize(x.size());
-
+    stat.resize(x.size() * (T_MAX / T_STEP - 1));
+    int statsCounter = 0;
     const int count = x.size();
 
     Keypoints   resKpReal;
@@ -79,14 +79,12 @@ bool performEstimation
     #pragma omp parallel for private(resKpReal, resDesc, matches) schedule(dynamic, 10)
     for (int i = 0; i < count; i++)
     {
-        //std::cout << "Threads: " << omp_get_num_threads() << std::endl;
         float       arg = x[i];
-        FrameMatchingStatistics& s = stat[i];
 
         cv::Mat     transformedImage;
         transformation.transform(arg, sourceImage, transformedImage);
 
-        if (1)
+        if (0)
         {
             //std::ostringstream image_name;
             cv::imwrite("Destination/" + transformation.name + std::to_string(i) + ".png", transformedImage);
@@ -102,14 +100,7 @@ bool performEstimation
 
         alg.extractFeatures(transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
 
-        // Initialize required fields
-        s.isValid        = resKpReal.size() > 0;
-        s.argumentValue  = arg;
-        s.alg            = alg.name;
-        s.trans          = transformation.name;
-        s.memoryAllocated = memoryAllocated;
-
-        if (!s.isValid)
+        if (resKpReal.size() <= 0)
             continue;
 
         alg.matchFeatures(sourceDesc, resDesc, matches);
@@ -145,28 +136,39 @@ bool performEstimation
                 visibleFeatures++;
             }
         }
-
-        for (int i = 0; i < matches.size(); i++)
-        {
-            cv::Point2f expected = sourcePointsInFrame[matches[i].trainIdx];
-            cv::Point2f actual   = resKpReal[matches[i].queryIdx].pt;
-
-            if (distance(expected, actual) < .05)
+        //std::cout << "NEW PERM" << std::endl;
+        for (float t = T_STEP; t <= T_MAX; t += T_STEP) {
+            for (int i = 0; i < matches.size(); i++)
             {
-                correctMatches++;
-            }
-        }
+                cv::Point2f expected = sourcePointsInFrame[matches[i].trainIdx];
+                cv::Point2f actual   = resKpReal[matches[i].queryIdx].pt;
 
+                if (distance(expected, actual) < t)
+                {
+                    correctMatches++;
+                }
+            }
+            FrameMatchingStatistics& s = stat[statsCounter];
+            s.isValid        = resKpReal.size() > 0;
+            s.argumentValue  = arg;
+            s.threshold      = t;
+            s.alg            = alg.name;
+            s.trans          = transformation.name;
+            s.memoryAllocated = memoryAllocated;
+            s.totalKeypoints = resKpReal.size();
+            s.consumedTimeMs = (end - start) * toMsMul;
+            s.precision = correctMatches / (float) matchesCount;
+            s.recall = correctMatches / (float) visibleFeatures; // correctMatches +
+            //std::cout << statsCounter << std::endl;
+            statsCounter++;
+            correctMatches  = 0;
+        }
         //std::cout << "matchesCount: " << matchesCount << ", visibleFeatures: " << visibleFeatures << std::endl;
 
         //bool homographyFound = ImageTransformation::findHomography(sourceKp, resKpReal, matches, correctMatches, homography);
 
         // Some simple stat:
         //s.isValid        = homographyFound;
-        s.totalKeypoints = resKpReal.size();
-        s.consumedTimeMs = (end - start) * toMsMul;
-        s.precision = correctMatches / (float) matchesCount;
-        s.recall = correctMatches / (float) visibleFeatures; // correctMatches +
 
         // Compute matching statistics
         //if (homographyFound)

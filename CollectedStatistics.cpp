@@ -39,6 +39,7 @@ FrameMatchingStatistics::FrameMatchingStatistics()
     homographyError = std::numeric_limits<float>::max();
     isValid = false;
     memoryAllocated = 0;
+    threshold = 0;
     alg = "";
     trans = "";
 }
@@ -101,24 +102,25 @@ bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value
     }
 }
 
-void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans) const {
+void FrameMatchingStatistics::getAlgTransInfo(std::string& alg, std::string& trans, float& threshold) const {
     alg = this->alg;
     trans = this->trans;
+    threshold = this->threshold;
 }
 
 std::ostream& FrameMatchingStatistics::writeElement(std::ostream& str, StatisticElement elem) const
 {
-    float value;
+    float value, threshold;
     std::string alg, trans;
-    getAlgTransInfo(alg, trans);
+    getAlgTransInfo(alg, trans, threshold);
 
     if (tryGetValue(elem, value))
     {
-        str << alg << tab << trans << tab << value << std::endl;
+        str << alg << tab << threshold << tab << trans << tab << value << std::endl;
     }
     else
     {
-        str << alg << tab << trans << tab << null << std::endl;
+        str << alg << tab << threshold << tab << trans << tab << null << std::endl;
     }
 
     return str;

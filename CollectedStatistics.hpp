@@ -41,6 +41,7 @@ struct FrameMatchingStatistics
     float stdDevDistance;
     float matchingRatio;
     float homographyError;
+    float threshold;
     size_t memoryAllocated;
 
     float recall;
@@ -54,7 +55,7 @@ struct FrameMatchingStatistics
     // inline float patternLocalization() const { return matchingRatio * percentOfMatches * (1.0f - homographyError); }
 
     std::ostream& writeElement(std::ostream& str, StatisticElement elem) const;
-    void getAlgTransInfo(std::string& alg, std::string& trans) const;
+    void getAlgTransInfo(std::string& alg, std::string& trans, float& threshold) const;
     bool tryGetValue(StatisticElement element, float& value) const;
 };
 

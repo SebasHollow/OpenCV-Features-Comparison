@@ -98,7 +98,7 @@ int main(int argc, const char* argv[])
                 const FeatureAlgorithm& alg   = algorithms[algIndex];
                 Keypoints tempKp = sourceKp;
                 sourceDesc = alg.getDescriptors(testImage, tempKp);
-                std::cout << "Testing " << alg.name << "...";
+                //std::cout << "Testing " << alg.name << "...";
 
                 for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
                 {
@@ -106,7 +106,7 @@ int main(int argc, const char* argv[])
                     performEstimation(alg, trans, testImage.clone(), tempKp, sourceDesc, fullStat.getStatistics(alg.name, trans.name));
                 }
                 sourceDesc.release();
-                std::cout << "done." << std::endl;
+                //std::cout << "done." << std::endl;
             }
 
             sourceKp.clear();
@@ -114,25 +114,25 @@ int main(int argc, const char* argv[])
             fullStat.printAverage(std::cout, StatisticsElementRecall);
             fullStat.printAverage(std::cout, StatisticsElementPrecision);
 
-            std::ofstream recallLog("Statistics/Recall_" + testImageName + ".txt");
+            std::ofstream recallLog("Statistics/Recall/Recall_" + testImageName + ".txt");
             fullStat.printStatistics(recallLog, StatisticsElementRecall);
 
-            std::ofstream precisionLog("Statistics/Precision_" + testImageName + ".txt");
+            std::ofstream precisionLog("Statistics/Precision/Precision_" + testImageName + ".txt");
             fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
 
-            std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated_" + testImageName + ".txt");
+            std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated/MemoryAllocated_" + testImageName + ".txt");
             fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
 
-            std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs" + testImageName + ".txt");
+            std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs/ConsumedTimeMs" + testImageName + ".txt");
             fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
 
-            std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor_" + testImageName + ".txt");
+            std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor/MemoryAllocatedPerDescriptor_" + testImageName + ".txt");
             fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
 
-            std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor_" + testImageName + ".txt");
+            std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor/ConsumedTimeMsPerDescriptor_" + testImageName + ".txt");
             fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
 
-            std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints_" + testImageName + ".txt");
+            std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints/TotalKeypoints_" + testImageName + ".txt");
             fullStat.printStatistics(TotalKeypointsLog, StatisticsElementPointsCount);
         }
     }
