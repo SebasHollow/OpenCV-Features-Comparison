@@ -32,24 +32,26 @@ int main(int argc, const char* argv[])
 
     // Initialize list of algorithm tuples:
 
-    algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
-    algorithms.push_back(FeatureAlgorithm("BRISK", cv::BRISK::create(), useBF));
-    algorithms.push_back(FeatureAlgorithm("SURF",  cv::xfeatures2d::SURF::create(),  useBF));
-    algorithms.push_back(FeatureAlgorithm("FREAK",  cv::xfeatures2d::FREAK::create(),  useBF));
+    // algorithms.push_back(FeatureAlgorithm("ORB",   cv::ORB::create(),   useBF));
+    // algorithms.push_back(FeatureAlgorithm("BRISK", cv::BRISK::create(), useBF));
+    // algorithms.push_back(FeatureAlgorithm("SURF",  cv::xfeatures2d::SURF::create(),  useBF));
+    // algorithms.push_back(FeatureAlgorithm("FREAK",  cv::xfeatures2d::FREAK::create(),  useBF));
     algorithms.push_back(FeatureAlgorithm("SIFT",  cv::xfeatures2d::SIFT::create(),  useBF));
-    algorithms.push_back(FeatureAlgorithm("BRIEF",  cv::xfeatures2d::BriefDescriptorExtractor::create(),  useBF));
-    algorithms.push_back(FeatureAlgorithm("LATCH",  cv::xfeatures2d::LATCH::create(),  useBF));
+    // algorithms.push_back(FeatureAlgorithm("BRIEF",  cv::xfeatures2d::BriefDescriptorExtractor::create(),  useBF));
+    // algorithms.push_back(FeatureAlgorithm("LATCH",  cv::xfeatures2d::LATCH::create(),  useBF));
 
-    transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform(10)));
-    cv::Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 50, 10, cv::Point2f(0.5f, 0.5f)));
-    transformations.push_back(rotationTransformation);
-    cv::Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.25f));
-    transformations.push_back(scaleTransformation);
-    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(rotationTransformation, scaleTransformation, CombinedTransform::ParamCombinationType::Full)));
-    transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-125, +125, 25)));
-    cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-    cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 5, cv::Point2f(0.5f, 0.5f)));
-    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
+    // transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform(10)));
+    // transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation(10, 50, 10, cv::Point2f(0.5f, 0.5f))));
+    transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.25f)));
+    //cv::Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 45, 15, cv::Point2f(0.5f, 0.5f)));
+    //transformations.push_back(rotationTransformation);
+    // cv::Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.25f, 2.0f, 0.5f));
+    // transformations.push_back(scaleTransformation);
+    // transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(rotationTransformation, scaleTransformation, CombinedTransform::ParamCombinationType::Full)));
+    // transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-125, +125, 25)));
+    // cv::Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation(0, 45, 15, cv::Point2f(0.5f, 0.5f)));
+    // cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 45, 15, cv::Point2f(0.5f, 0.5f)));
+    // transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
 
     if (argc < 2)
     {
@@ -84,13 +86,14 @@ int main(int argc, const char* argv[])
                 testImage = fullTestImage;
             }
 
-            surf_detector->detect(testImage, sourceKp);
-            CollectedStatistics fullStat;
-
             if (testImage.empty())
             {
-                std::cout << "Cannot read image from " << testImagePath << std::endl;
+                std::cout << "Error: Cannot read image from " << testImagePath << std::endl;
+                continue;
             }
+
+            surf_detector->detect(testImage, sourceKp);
+            CollectedStatistics fullStat;
 
             for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
             {
@@ -114,25 +117,25 @@ int main(int argc, const char* argv[])
             fullStat.printAverage(std::cout, StatisticsElementRecall);
             fullStat.printAverage(std::cout, StatisticsElementPrecision);
 
-            std::ofstream recallLog("Statistics/Recall/Recall_" + testImageName + ".txt");
+            std::ofstream recallLog("Statistics/Recall_" + testImageName + ".txt");
             fullStat.printStatistics(recallLog, StatisticsElementRecall);
 
-            std::ofstream precisionLog("Statistics/Precision/Precision_" + testImageName + ".txt");
+            std::ofstream precisionLog("Statistics/Precision_" + testImageName + ".txt");
             fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
 
-            std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated/MemoryAllocated_" + testImageName + ".txt");
+            std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated_" + testImageName + ".txt");
             fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
 
-            std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs/ConsumedTimeMs" + testImageName + ".txt");
+            std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs" + testImageName + ".txt");
             fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
 
-            std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor/MemoryAllocatedPerDescriptor_" + testImageName + ".txt");
+            std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor_" + testImageName + ".txt");
             fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
 
-            std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor/ConsumedTimeMsPerDescriptor_" + testImageName + ".txt");
+            std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor_" + testImageName + ".txt");
             fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
 
-            std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints/TotalKeypoints_" + testImageName + ".txt");
+            std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints_" + testImageName + ".txt");
             fullStat.printStatistics(TotalKeypointsLog, StatisticsElementPointsCount);
         }
     }

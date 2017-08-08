@@ -6,7 +6,7 @@
 #include "ImageTransformation.hpp"
 
 const float T_MAX = 20.0;
-const float T_STEP = 0.2;
+const float T_STEP = 0.4;
 
 bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev);
 

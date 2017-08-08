@@ -65,7 +65,7 @@ bool performEstimation
     //
 
     std::vector<float> x = transformation.getX();
-    stat.resize(x.size() * (T_MAX / T_STEP - 1));
+    stat.resize(x.size() * (T_MAX / T_STEP ));
     int statsCounter = 0;
     const int count = x.size();
 
@@ -103,7 +103,16 @@ bool performEstimation
         if (resKpReal.size() <= 0)
             continue;
 
-        alg.matchFeatures(sourceDesc, resDesc, matches);
+        try
+        {
+            alg.matchFeatures(sourceDesc, resDesc, matches);
+        }
+        catch ( cv::Exception& e )
+        {
+            const char* err_msg = e.what();
+            std::cout << "Exception for " << transformation.name << i << ": " << err_msg << std::endl;
+            continue;
+        }
 
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
         cv::KeyPoint::convert(sourceKp, sourcePoints);

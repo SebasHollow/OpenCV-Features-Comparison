@@ -360,7 +360,7 @@ GaussianBlurTransform::GaussianBlurTransform(int maxKernelSize)
     : ImageTransformation("Gaussian blur")
     , m_maxKernelSize(maxKernelSize)
 {
-    for (int arg = 1; arg <= maxKernelSize; arg++)
+    for (int arg = 1; arg <= maxKernelSize; arg+=2)
         m_args.push_back(static_cast<float>(arg));
 }
 
