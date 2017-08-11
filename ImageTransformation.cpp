@@ -130,33 +130,41 @@ std::vector<float> ImageRotationTransformation::getX() const
     return m_args;
 }
 
-// void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const
-// {
-//     cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-//     cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
-//     cv::warpAffine(source, result, rotationMat, source.size(), cv::INTER_CUBIC);
-// }
-
-void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
-    cv::Point2f center(source.cols / 2.0, source.rows / 2.0);
-    cv::Mat rot = cv::getRotationMatrix2D(center, t, 1.0);
-    cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
-    rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
-    rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
-    cv::warpAffine(source, result, rot, bbox.size());
+void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const
+{
+    cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
+    cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
+    cv::warpAffine(source, result, rotationMat, source.size(), cv::INTER_CUBIC);
 }
 
+// void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
+//     cv::Point2f center(source.cols / 2.0, source.rows / 2.0);
+//     cv::Mat rot = cv::getRotationMatrix2D(center, t, 1.0);
+//     cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
+//     rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+//     rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+//     cv::warpAffine(source, result, rot, bbox.size());
+// }
 cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
 {
     cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
     cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
-    cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
-    rotationMat.at<double>(0, 2) += bbox.width / 2.0 - center.x;
-    rotationMat.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+
     cv::Mat h = cv::Mat::eye(3, 3, CV_64FC1);
     rotationMat.copyTo(h(cv::Range(0, 2), cv::Range(0, 3)));
     return h;
 }
+// cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
+// {
+//     cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
+//     cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
+//     cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
+//     rotationMat.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+//     rotationMat.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+//     cv::Mat h = cv::Mat::eye(3, 3, CV_64FC1);
+//     rotationMat.copyTo(h(cv::Range(0, 2), cv::Range(0, 3)));
+//     return h;
+// }
 
 void rotateImage(const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
 {
@@ -332,8 +340,9 @@ ImageScalingTransformation::ImageScalingTransformation(float minScale, float max
     , m_step(step)
 {
     // Fill the arguments
-    for (float arg = minScale; arg <= maxScale; arg += step)
+    for (float arg = minScale; arg <= maxScale; arg += step){
         m_args.push_back(arg);
+    }
 }
 
 std::vector<float> ImageScalingTransformation::getX() const
@@ -360,7 +369,7 @@ GaussianBlurTransform::GaussianBlurTransform(int maxKernelSize)
     : ImageTransformation("Gaussian blur")
     , m_maxKernelSize(maxKernelSize)
 {
-    for (int arg = 1; arg <= maxKernelSize; arg++)
+    for (int arg = 1; arg <= maxKernelSize; arg += 2)
         m_args.push_back(static_cast<float>(arg));
 }
 

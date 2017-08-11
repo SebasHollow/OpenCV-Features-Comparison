@@ -86,7 +86,7 @@ bool performEstimation
         cv::Mat     transformedImage;
         transformation.transform(arg, sourceImage, transformedImage);
 
-        if (1)
+        if (0)
         {
             //std::ostringstream image_name;
             cv::imwrite("Destination/" + transformation.name + std::to_string(i) + ".png", transformedImage);
@@ -151,7 +151,7 @@ bool performEstimation
             cv::Point2f expected = sourcePointsInFrame[matches[i].trainIdx];
             cv::Point2f actual   = resKpReal[matches[i].queryIdx].pt;
 
-            if (distance(expected, actual) < .05)
+            if (distance(expected, actual) < 3.0)
             {
                 correctMatches++;
             }
@@ -163,10 +163,10 @@ bool performEstimation
 
         // Some simple stat:
         //s.isValid        = homographyFound;
-        s.totalKeypoints = resKpReal.size();
-        s.consumedTimeMs = (end - start) * toMsMul;
-        s.precision = correctMatches / (float) matchesCount;
-        s.recall = correctMatches / (float) visibleFeatures; // correctMatches +
+        s.totalKeypoints += resKpReal.size();
+        s.consumedTimeMs += (end - start) * toMsMul;
+        s.precision += correctMatches / (float) matchesCount;
+        s.recall += correctMatches / (float) visibleFeatures;
 
         // Compute matching statistics
         //if (homographyFound)
