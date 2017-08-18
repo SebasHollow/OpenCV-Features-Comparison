@@ -29,7 +29,6 @@ float distance(const cv::Point2f a, const cv::Point2f b)
 
 cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography);
 
-
 bool performEstimation
 (
     const FeatureAlgorithm& alg,
@@ -40,30 +39,6 @@ bool performEstimation
     std::vector<FrameMatchingStatistics>& stat
 )
 {
-
-// Keypoints   sourceKp;
-//     Descriptors sourceDesc;
-
-//     cv::Mat gray;
-
-//     if (sourceImage.channels() == 3)
-//     {
-//         cv::cvtColor(sourceImage, gray, cv::COLOR_BGR2GRAY);
-//     }
-//     else if (sourceImage.channels() == 4)
-//     {
-//         cv::cvtColor(sourceImage, gray, cv::COLOR_BGRA2GRAY);
-//     }
-//     else if(sourceImage.channels() == 1)
-//     {
-//         gray = sourceImage;
-//     }
-
-//     if (!alg.extractFeatures(gray, sourceKp, sourceDesc))
-//         return false;
-
-    //
-
     std::vector<float> x = transformation.getX();
     stat.resize(x.size());
 
@@ -88,29 +63,27 @@ bool performEstimation
 
         if (0)
         {
-            //std::ostringstream image_name;
             cv::imwrite("Destination/" + transformation.name + std::to_string(i) + ".png", transformedImage);
-            // image_name << "image_dump_" << transformation.name << "_" << i << ".bin";
-            // std::ofstream dump(image_name.str().c_str(), std::ios::binary);
-            // std::copy(transformedImage.datastart, transformedImage.dataend, std::ostream_iterator<uint8_t>(dump));
         }
 
         cv::Mat expectedHomography = transformation.getHomography(arg, sourceImage);
 
         int64 start, end;
         size_t memoryAllocated;
+        //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
 
         alg.extractFeatures(transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
 
         // Initialize required fields
+        s.memoryAllocated = memoryAllocated;
         s.isValid        = resKpReal.size() > 0;
         s.argumentValue  = arg;
         s.alg            = alg.name;
         s.trans          = transformation.name;
-        s.memoryAllocated = memoryAllocated;
-
-        if (!s.isValid)
+        if (!s.isValid) {
+            std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
             continue;
+        }
 
         alg.matchFeatures(sourceDesc, resDesc, matches);
 
@@ -119,17 +92,6 @@ bool performEstimation
         cv::perspectiveTransform(sourcePoints, sourcePointsInFrame, expectedHomography);
 
         cv::Mat homography;
-
-        //so, we have :
-        //N - number of keypoints in the first image that are also visible
-        //    (after transformation) on the second image
-
-        //    N1 - number of keypoints in the first image that have been matched.
-
-        //    n - number of the correct matches found by the matcher
-
-        //    n / N1 - precision
-        //    n / N - recall(? )
 
         int visibleFeatures = 0;
         int correctMatches  = 0;
@@ -157,53 +119,10 @@ bool performEstimation
             }
         }
 
-        //std::cout << "matchesCount: " << matchesCount << ", visibleFeatures: " << visibleFeatures << std::endl;
-
-        //bool homographyFound = ImageTransformation::findHomography(sourceKp, resKpReal, matches, correctMatches, homography);
-
-        // Some simple stat:
-        //s.isValid        = homographyFound;
         s.totalKeypoints += resKpReal.size();
         s.consumedTimeMs += (end - start) * toMsMul;
         s.precision += correctMatches / (float) matchesCount;
         s.recall += correctMatches / (float) visibleFeatures;
-
-        // Compute matching statistics
-        //if (homographyFound)
-        //{
-        //    cv::Mat r = expectedHomography * homography.inv();
-        //    float error = cv::norm(cv::Mat::eye(3,3, CV_64FC1) - r, cv::NORM_INF);
-
-        //    computeMatchesDistanceStatistics(correctMatches, s.meanDistance, s.stdDevDistance);
-        //    s.reprojectionError = computeReprojectionError(sourceKp, resKpReal, correctMatches, homography);
-        //    s.homographyError = std::min(error, 1.0f);
-
-        //    if (0 && error >= 1)
-        //    {
-        //        std::cout << "H expected:" << expectedHomography << std::endl;
-        //        std::cout << "H actual:"   << homography << std::endl;
-        //        std::cout << "H error:"    << error << std::endl;
-        //        std::cout << "R error:"    << s.reprojectionError(0) << ";"
-        //                                   << s.reprojectionError(1) << ";"
-        //                                   << s.reprojectionError(2) << ";"
-        //                                   << s.reprojectionError(3) << std::endl;
-        //
-        //        cv::Mat matchesImg;
-        //        cv::drawMatches(transformedImage,
-        //                        resKpReal,
-        //                        gray,
-        //                        sourceKp,
-        //                        correctMatches,
-        //                        matchesImg,
-        //                        cv::Scalar::all(-1),
-        //                        cv::Scalar::all(-1),
-        //                        std::vector<char>(),
-        //                        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-        //
-        //        cv::imshow("Matches", matchesImg);
-        //        cv::waitKey(-1);
-        //    }
-        //}
     }
 
     return true;

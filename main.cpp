@@ -46,9 +46,9 @@ int main(int argc, const char* argv[])
 
     transformations.push_back(cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.5f, 2.0f, 0.25f)));
 
-    cv::Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 60, 15, cv::Point2f(0.5f, 0.5f)));
-    cv::Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.5f, 2.0f, 0.5f));
-    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(rotationTransformation, scaleTransformation, CombinedTransform::ParamCombinationType::Full)));
+    cv::Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation>(new ImageRotationTransformation(0, 45, 15, cv::Point2f(0.5f, 0.5f)));
+    cv::Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation>(new ImageScalingTransformation(0.75f, 1.75f, 0.25f));
+    transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(scaleTransformation, rotationTransformation, CombinedTransform::ParamCombinationType::Full)));
 
     transformations.push_back(cv::Ptr<ImageTransformation>(new BrightnessImageTransform(-175, +175, 25)));
 
@@ -56,9 +56,9 @@ int main(int argc, const char* argv[])
     cv::Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation(0, 40, 10, cv::Point2f(0.5f, 0.5f)));
     transformations.push_back(cv::Ptr<ImageTransformation>(new CombinedTransform(x, y, CombinedTransform::ParamCombinationType::Full)));
 
-    if (argc < 2)
+    if (argc != 2)
     {
-        std::cout << "At least one input folder should be passed" << std::endl;
+        std::cout << "One input folder should be passed" << std::endl;
     }
     Keypoints sourceKp;
     Descriptors sourceDesc;
@@ -99,11 +99,10 @@ int main(int argc, const char* argv[])
 
             for (size_t algIndex = 0; algIndex < algorithms.size(); algIndex++)
             {
-                cv::clearMemoryAllocated();
                 const FeatureAlgorithm& alg   = algorithms[algIndex];
                 Keypoints tempKp = sourceKp;
                 sourceDesc = alg.getDescriptors(testImage, tempKp);
-                //std::cout << "Testing " << alg.name << "...";
+                std::cout << "Testing " << alg.name << "...";
 
                 for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
                 {
@@ -111,36 +110,35 @@ int main(int argc, const char* argv[])
                     performEstimation(alg, trans, testImage.clone(), tempKp, sourceDesc, fullStat.getStatistics(alg.name, trans.name));
                 }
                 sourceDesc.release();
-                //std::cout << "done." << std::endl;
+                std::cout << "done." << std::endl;
             }
 
             sourceKp.clear();
 
         }
+        std::ofstream recallLog("Recall_.txt");
+        fullStat.printStatistics(recallLog, StatisticsElementRecall);
+
+        std::ofstream precisionLog("Precision_.txt");
+        fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
+
+        std::ofstream memoryAllocatedLog("MemoryAllocated_.txt");
+        fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
+
+        std::ofstream ConsumedTimeMsLog("ConsumedTimeMs.txt");
+        fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
+
+        std::ofstream memoryAllocatedPerDescriptorLog("MemoryAllocatedPerDescriptor_.txt");
+        fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
+
+        std::ofstream ConsumedTimeMsPerDescriptorLog("ConsumedTimeMsPerDescriptor_.txt");
+        fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
+
+        std::ofstream TotalKeypointsLog("TotalKeypoints_.txt");
+        fullStat.printStatistics(TotalKeypointsLog, StatisticsElementPointsCount);
     }
-    // fullStat.printAverage(std::cout, StatisticsElementRecall);
-    // fullStat.printAverage(std::cout, StatisticsElementPrecision);
-
-    std::ofstream recallLog("Statistics/Recall_.txt");
-    fullStat.printStatistics(recallLog, StatisticsElementRecall);
-
-    std::ofstream precisionLog("Statistics/Precision_.txt");
-    fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
-
-    std::ofstream memoryAllocatedLog("Statistics/MemoryAllocated_.txt");
-    fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
-
-    std::ofstream ConsumedTimeMsLog("Statistics/ConsumedTimeMs.txt");
-    fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
-
-    std::ofstream memoryAllocatedPerDescriptorLog("Statistics/MemoryAllocatedPerDescriptor_.txt");
-    fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
-
-    std::ofstream ConsumedTimeMsPerDescriptorLog("Statistics/ConsumedTimeMsPerDescriptor_.txt");
-    fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
-
-    std::ofstream TotalKeypointsLog("Statistics/TotalKeypoints_.txt");
-    fullStat.printStatistics(TotalKeypointsLog, StatisticsElementPointsCount);
+    fullStat.printAverage(std::cout, StatisticsElementRecall);
+    fullStat.printAverage(std::cout, StatisticsElementPrecision);
 
     return 0;
 }

@@ -60,11 +60,11 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     if (kp.empty())
         return false;
 
-    cv::clearMemoryAllocated();
     start = cv::getTickCount();
+    //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
     featureEngine->compute(image, kp, desc);
+    //memoryAllocated = cv::getAmountOfMemoryAllocated(); // Only works with custom compiled OpenCV version
     end = cv::getTickCount();
-    memoryAllocated = cv::getAmountOfMemoryAllocated();
 
     return kp.size() > 0;
 }
