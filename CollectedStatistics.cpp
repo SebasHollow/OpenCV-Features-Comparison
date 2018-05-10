@@ -1,8 +1,6 @@
 #include "CollectedStatistics.hpp"
 
 #include <sstream>
-#include <iostream>
-#include <iterator>
 #include <numeric>
 #include <cassert>
 
@@ -113,65 +111,57 @@ std::ostream& FrameMatchingStatistics::writeElement(std::ostream& str, Statistic
     getAlgTransInfo(alg, trans);
 
     if (tryGetValue(elem, value))
-    {
         str << alg << tab << trans << tab << value << std::endl;
-    }
     else
-    {
         str << alg << tab << trans << tab << null << std::endl;
-    }
 
     return str;
 }
 
 SingleRunStatistics& CollectedStatistics::getStatistics(std::string algorithmName, std::string transformationName)
-{
+    {
     return m_allStats[std::make_pair(algorithmName, transformationName)];
-}
+    }
 
 
 CollectedStatistics::OuterGroup CollectedStatistics::groupByAlgorithmThenByTransformation() const
-{
+    {
     OuterGroup result;
 
-    for (std::map<Key, SingleRunStatistics>::const_iterator i = m_allStats.begin(); i != m_allStats.end(); ++i)
-    {
-        result[i->first.first][i->first.second] = &(i->second);
-    }
+    for (const auto& m_allStat : m_allStats)
+        result[m_allStat.first.first][m_allStat.first.second] = &(m_allStat.second);
 
     return result;
-}
+    }
 
 CollectedStatistics::OuterGroupLine CollectedStatistics::groupByTransformationThenByAlgorithm() const
 {
     OuterGroup result;
 
-    for (std::map<Key, SingleRunStatistics>::const_iterator i = m_allStats.begin(); i != m_allStats.end(); ++i)
-    {
-        result[i->first.second][i->first.first] = &(i->second);
-    }
+    for (const auto& m_allStat : m_allStats)
+        result[m_allStat.first.second][m_allStat.first.first] = &(m_allStat.second);
 
     OuterGroupLine line;
 
     for (OuterGroup::const_iterator tIter = result.begin(); tIter != result.end(); ++tIter)
-    {
-        std::string transformationName               = tIter->first;
-        const CollectedStatistics::InnerGroup& inner = tIter->second;
+        {
+        const std::string transformationName = tIter->first;
+        const InnerGroup& inner = tIter->second;
 
         GroupedByArgument& lineStat = line[transformationName];
 
         std::vector<const SingleRunStatistics*> statitics;
 
-        for (CollectedStatistics::InnerGroup::const_iterator algIter = inner.begin(); algIter != inner.end(); ++algIter)
-        {
-            std::string algName = algIter->first;
+        for (const auto& algIter : inner)
+            {
+            const std::string algName = algIter.first;
 
             lineStat.algorithms.push_back(algName);
-            statitics.push_back(algIter->second);
-        }
+            statitics.push_back(algIter.second);
+            }
 
         const SingleRunStatistics& firstStat = *statitics.front();
-        int argumentsCount = firstStat.size();
+        const int argumentsCount = firstStat.size();
 
         for (int i = 0; i < argumentsCount; i++)
         {
@@ -210,9 +200,9 @@ std::ostream& CollectedStatistics::printAverage(std::ostream& str, StatisticElem
 
 std::ostream& CollectedStatistics::printStatistics(std::ostream& str, StatisticElement elem) const
 {
-    CollectedStatistics::OuterGroupLine report = groupByTransformationThenByAlgorithm();
+    OuterGroupLine report = groupByTransformationThenByAlgorithm();
 
-    for (CollectedStatistics::OuterGroupLine::const_iterator tIter = report.begin(); tIter != report.end(); ++tIter)
+    for (OuterGroupLine::const_iterator tIter = report.begin(); tIter != report.end(); ++tIter)
     {
         const GroupedByArgument& inner = tIter->second;
         for (size_t i = 0; i < inner.lines.size(); i++)
@@ -238,14 +228,14 @@ std::ostream& CollectedStatistics::printPerformanceStatistics(std::ostream& str)
         << quote("Average time per Frame")    << tab
         << quote("Average time per KeyPoint") << std::endl;
 
-    CollectedStatistics::OuterGroup report = groupByAlgorithmThenByTransformation();
+    OuterGroup report = groupByAlgorithmThenByTransformation();
 
-    for (CollectedStatistics::OuterGroup::const_iterator alg = report.begin(); alg != report.end(); ++alg)
+    for (OuterGroup::const_iterator alg = report.begin(); alg != report.end(); ++alg)
     {
         std::vector<double> timePerFrames;
         std::vector<double> timePerKeyPoint;
 
-        for (CollectedStatistics::InnerGroup::const_iterator tIter = alg->second.begin(); tIter != alg->second.end(); ++tIter)
+        for (InnerGroup::const_iterator tIter = alg->second.begin(); tIter != alg->second.end(); ++tIter)
         {
             const SingleRunStatistics& runStatistics = *tIter->second;
             for (size_t i = 0; i < runStatistics.size(); i++)

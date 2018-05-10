@@ -34,13 +34,13 @@ void initializeAlgorithmsAndTransformations ()
     bool useBF = true;
 
     // Initialize list of algorithm tuples
-    algorithms.push_back (FeatureAlgorithm ("ORB", ORB::create(), useBF));
-    algorithms.push_back (FeatureAlgorithm ("BRISK", BRISK::create(), useBF));
-    algorithms.push_back (FeatureAlgorithm ("SURF", xfeatures2d::SURF::create(), useBF));
+    algorithms.emplace_back("ORB", ORB::create(), useBF);
+    algorithms.emplace_back("BRISK", BRISK::create(), useBF);
+    algorithms.emplace_back("SURF", xfeatures2d::SURF::create(), useBF);
     //algorithms.push_back (FeatureAlgorithm ("FREAK",  xfeatures2d::FREAK::create(),  useBF));
-    algorithms.push_back (FeatureAlgorithm ("SIFT", xfeatures2d::SIFT::create(), useBF));
-    algorithms.push_back (FeatureAlgorithm ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF));
-    algorithms.push_back (FeatureAlgorithm ("LATCH", xfeatures2d::LATCH::create(), useBF));
+    algorithms.emplace_back("SIFT", xfeatures2d::SIFT::create(), useBF);
+    algorithms.emplace_back("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
+    algorithms.emplace_back("LATCH", xfeatures2d::LATCH::create(), useBF);
 
     transformations.push_back(cv::Ptr<ImageTransformation>(new GaussianBlurTransform (15)));
     transformations.push_back(cv::Ptr<ImageTransformation>(new ImageRotationTransformation (0, 90, 5, Point2f(0.5f, 0.5f))));
@@ -74,7 +74,6 @@ int main(int argc, const char* argv[])
     fs::directory_iterator it(srcDir), eod;
     Keypoints sourceKeypoints;
     Mat sourceImage;
-    std::string testImagePath;
     CollectedStatistics fullStat;
 
     //std::vector<FeatureAlgorithm>              algorithms;
@@ -115,7 +114,7 @@ int main(int argc, const char* argv[])
                 // Apply transformations.
                 for (size_t transformIndex = 0; transformIndex < transformations.size(); transformIndex++)
                     {
-                    const ImageTransformation& trans = *transformations[transformIndex].get();
+                    const ImageTransformation& trans = *transformations[transformIndex];
                     performEstimation (alg, trans, testImage.clone(), tempKeypoints, sourceDescriptors, fullStat.getStatistics (alg.name, trans.name));
                     }
 
@@ -126,22 +125,23 @@ int main(int argc, const char* argv[])
             sourceKeypoints.clear();
             }
 
-        std::ofstream recallLog("Recall_.txt");
+        std::string logsDir = R"(logs\)";
+        std::ofstream recallLog(logsDir + "Recall_.txt");
         fullStat.printStatistics(recallLog, StatisticsElementRecall);
 
-        std::ofstream precisionLog("Precision_.txt");
+        std::ofstream precisionLog(logsDir + "Precision_.txt");
         fullStat.printStatistics(precisionLog, StatisticsElementPrecision);
 
-        std::ofstream memoryAllocatedLog("MemoryAllocated_.txt");
+        std::ofstream memoryAllocatedLog(logsDir + "MemoryAllocated_.txt");
         fullStat.printStatistics(memoryAllocatedLog, StatisticsElementMemoryAllocated);
 
-        std::ofstream ConsumedTimeMsLog("ConsumedTimeMs.txt");
+        std::ofstream ConsumedTimeMsLog(logsDir + "ConsumedTimeMs.txt");
         fullStat.printStatistics(ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
 
-        std::ofstream memoryAllocatedPerDescriptorLog("MemoryAllocatedPerDescriptor_.txt");
+        std::ofstream memoryAllocatedPerDescriptorLog(logsDir + "MemoryAllocatedPerDescriptor_.txt");
         fullStat.printStatistics(memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
 
-        std::ofstream ConsumedTimeMsPerDescriptorLog("ConsumedTimeMsPerDescriptor_.txt");
+        std::ofstream ConsumedTimeMsPerDescriptorLog(logsDir + "ConsumedTimeMsPerDescriptor_.txt");
         fullStat.printStatistics(ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
 
         std::ofstream TotalKeypointsLog("TotalKeypoints_.txt");

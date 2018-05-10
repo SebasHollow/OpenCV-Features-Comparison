@@ -110,7 +110,7 @@
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(OpenCVInstallDir)\include\;$(BoostDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OpenCVInstallDir)include\;$(BoostDir)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
