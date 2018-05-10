@@ -56,3 +56,9 @@ CTestTestfile.cmake
 *.jpg
 *.png
 *.txt
+
+### Project files and binaries
+*.sln
+.vs/
+x64/
+Debug/
