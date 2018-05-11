@@ -27,6 +27,7 @@ Mat ConvertImage(const Mat& fullTestImage);
 void TestImage(const Mat & testImage, CollectedStatistics & statistics);
 void initializeAlgorithmsAndTransformations ();
 
+static bool SAVE_TRANSFORMED_IMAGES = true;
 static std::vector<FeatureAlgorithm>              algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
 static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();

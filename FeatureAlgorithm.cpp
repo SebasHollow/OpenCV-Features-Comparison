@@ -1,58 +1,55 @@
 #include "FeatureAlgorithm.hpp"
 #include "opencv2/xfeatures2d.hpp"
 #include <cassert>
+#include <utility>
 
 static cv::Ptr<cv::flann::IndexParams> indexParamsForDescriptorType(int descriptorType, int defaultNorm)
-{
-    switch (defaultNorm)
     {
-    case cv::NORM_L2:
-        return cv::Ptr<cv::flann::IndexParams>(new cv::flann::KDTreeIndexParams());
+    switch (defaultNorm)
+        {
+        case cv::NORM_L2:
+            return cv::Ptr<cv::flann::IndexParams>(new cv::flann::KDTreeIndexParams());
 
-    case cv::NORM_HAMMING:
-        return cv::Ptr<cv::flann::IndexParams>(new cv::flann::LshIndexParams(20, 15, 2));
+        case cv::NORM_HAMMING:
+            return cv::Ptr<cv::flann::IndexParams>(new cv::flann::LshIndexParams(20, 15, 2));
 
-    default:
-        CV_Assert(false && "Unsupported descriptor type");
-    };
-}
+        default:
+            CV_Assert(false && "Unsupported descriptor type");
+        };
+    }
 
 cv::Ptr<cv::DescriptorMatcher> matcherForDescriptorType(int descriptorType, int defaultNorm, bool bruteForce)
-{
-    if (bruteForce) {
-        return cv::Ptr<cv::DescriptorMatcher>(new cv::BFMatcher(defaultNorm, true));
-    }
-    else {
-        return  cv::Ptr<cv::DescriptorMatcher>(new cv::FlannBasedMatcher(indexParamsForDescriptorType(descriptorType, defaultNorm)));
-    }
-}
+    {
+    if (bruteForce)
+        return cv::Ptr<cv::DescriptorMatcher> (new cv::BFMatcher (defaultNorm, true));
 
-FeatureAlgorithm::FeatureAlgorithm(const std::string& n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather)
-: name(n)
-, knMatchSupported(false)
-, featureEngine(fe)
-, matcher(matcherForDescriptorType(fe->descriptorSize(), fe->defaultNorm(), useBruteForceMather))
-{
+    return  cv::Ptr<cv::DescriptorMatcher> (new cv::FlannBasedMatcher (indexParamsForDescriptorType (descriptorType, defaultNorm)));
+    }
+
+FeatureAlgorithm::FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather)
+    : name(std::move(n)), knMatchSupported (false), featureEngine(fe), 
+    matcher (matcherForDescriptorType (fe->descriptorSize(), fe->defaultNorm(), useBruteForceMather))
+    {
     CV_Assert(fe);
-}
+    }
 
 
 bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
-{
+    {
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
-    surf_detector->detect(image, kp);
+    surf_detector->detect (image, kp);
 
     if (kp.empty())
         return false;
 
-    featureEngine->compute(image, kp, desc);
+    featureEngine->compute (image, kp, desc);
 
-    return kp.size() > 0;
-}
+    return !kp.empty();
+    }
 
 bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
-{
+    {
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
     surf_detector->detect(image, kp);
@@ -66,8 +63,8 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     //memoryAllocated = cv::getAmountOfMemoryAllocated(); // Only works with custom compiled OpenCV version
     end = cv::getTickCount();
 
-    return kp.size() > 0;
-}
+    return !kp.empty();
+    }
 
 Descriptors FeatureAlgorithm::getDescriptors(const cv::Mat& image, Keypoints& kp) const
 {

@@ -5,6 +5,7 @@
 #include "FeatureAlgorithm.hpp"
 #include "ImageTransformation.hpp"
 
+bool SAVE_TRANSFORMED_IMAGES = true;
 
 bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev);
 
