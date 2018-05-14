@@ -5,18 +5,17 @@
 #include "FeatureAlgorithm.hpp"
 #include "ImageTransformation.hpp"
 
-bool SAVE_TRANSFORMED_IMAGES = true;
+static bool SAVE_TRANSFORMED_IMAGES = true;
 
-bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev);
+bool computeMatchesDistanceStatistics (const Matches& matches, float& meanDistance, float& stdDev);
 
-void ratioTest(const std::vector<Matches>& knMatches, float maxRatio, Matches& goodMatches);
+void ratioTest (const std::vector<Matches>& knMatches, float maxRatio, Matches& goodMatches);
 
-bool performEstimation(const FeatureAlgorithm& alg,
-                       const ImageTransformation& transformation,
-                       const cv::Mat& sourceImage,
-                       const Keypoints& sourceKp,
-                       const Descriptors& sourceDesc,
-                       SingleRunStatistics& stat);
-
+bool performEstimation (const FeatureAlgorithm& alg,
+                        const ImageTransformation& transformation,
+                        const cv::Mat& sourceImage,
+                        const Keypoints& sourceKp,
+                        const Descriptors& sourceDesc,
+                        SingleRunStatistics& stat);
 
 #endif

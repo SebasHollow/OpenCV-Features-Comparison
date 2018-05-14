@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thesis project", "Thesis project.vcxproj", "{B9A18502-0EDC-4D67-BDE9-8E5190009FBF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Feature comparison", "Thesis project.vcxproj", "{B9A18502-0EDC-4D67-BDE9-8E5190009FBF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {78F50B96-4500-44F5-AA9C-2B4E37E23F1E}
+		SolutionGuid = {FA26AE7A-119D-44B1-909E-DFAB4C87A4B1}
 	EndGlobalSection
 EndGlobal

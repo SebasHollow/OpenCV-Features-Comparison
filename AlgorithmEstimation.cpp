@@ -25,11 +25,17 @@ float distance (const cv::Point2f& a, const cv::Point2f& b)
 
 cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography);
 
+inline bool fileExists (const std::string& name)
+    {
+    struct stat buffer;
+    return stat (name.c_str(), &buffer) == 0;
+    }
+
 bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& transformation, const cv::Mat& sourceImage, const Keypoints& sourceKp,
                         const Descriptors& sourceDesc, std::vector<FrameMatchingStatistics>& stat)
     {
     std::vector<float> x = transformation.getX();
-    stat.resize(x.size());
+    stat.resize (x.size());
 
     const int count = x.size();
 
@@ -47,12 +53,18 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         float       arg = x[i];
         FrameMatchingStatistics& s = stat[i];
 
-        cv::Mat     transformedImage;
-        transformation.transform (arg, sourceImage, transformedImage);
+        const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + std::to_string(i) + ".png";
 
-        if (SAVE_TRANSFORMED_IMAGES)
-            cv::imwrite("Destination/" + transformation.name + std::to_string(i) + ".png", transformedImage);
-            
+        cv::Mat transformedImage;
+        //if (fileExists (imgFilepath))
+        //    transformedImage = imread (imgFilepath);
+        //else
+            //{
+        transformation.transform (arg, sourceImage, transformedImage);
+            //if (SAVE_TRANSFORMED_IMAGES)
+            //    bool success = imwrite(imgFilepath, transformedImage);
+            //}
+
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 
         int64 start, end;
