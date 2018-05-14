@@ -61,9 +61,13 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         //else
             //{
         transformation.transform (arg, sourceImage, transformedImage);
-            //if (SAVE_TRANSFORMED_IMAGES)
-            //    bool success = imwrite(imgFilepath, transformedImage);
+        if (!fileExists (imgFilepath))
+            if (SAVE_TRANSFORMED_IMAGES)
+                bool success = imwrite(imgFilepath, transformedImage);
             //}
+
+        if (SKIP_TRANSFORMATON_ANALYSIS)
+            continue;
 
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 

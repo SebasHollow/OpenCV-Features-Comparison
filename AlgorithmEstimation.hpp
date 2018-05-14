@@ -6,6 +6,7 @@
 #include "ImageTransformation.hpp"
 
 static bool SAVE_TRANSFORMED_IMAGES = true;
+static bool SKIP_TRANSFORMATON_ANALYSIS = false;
 
 bool computeMatchesDistanceStatistics (const Matches& matches, float& meanDistance, float& stdDev);
 

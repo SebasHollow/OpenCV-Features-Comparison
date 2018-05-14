@@ -29,9 +29,8 @@ void initializeAlgorithmsAndTransformations ();
 static std::vector<FeatureAlgorithm> algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
 static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
-const bool USE_VERBOSE_TRANSFORMATIONS = true;
 
-const std::string _defaultTestDir = R"(C:\Dropbox\Bakalauras\.workdir\Datasets\Resolution\dataset)";
+const std::string _defaultTestDir = R"(C:\Users\SebasHollow\Dropbox\Bakalauras\.workdir\Datasets\Resolution\timeTest\)";
 const std::string _logsDir = R"(logs\)";
 
 void CreateLogsDir ();
@@ -45,7 +44,7 @@ int main (int argc, const char* argv[])
         testPath = argv[1];
     else
         testPath = _defaultTestDir;
-    
+
     CreateLogsDir();
 
     const fs::path srcDir (testPath);
@@ -75,8 +74,11 @@ int main (int argc, const char* argv[])
         PrintLogs (fullStat);
         }
 
-    fullStat.printAverage (std::cout, StatisticsElementRecall);
-    fullStat.printAverage (std::cout, StatisticsElementPrecision);
+    std::ofstream statisticsElementRecall (_logsDir + "Average_StatisticsElementRecall_.txt");
+    std::ofstream statisticsElementPrecision (_logsDir + "Average_StatisticsElementPrecision_.txt");
+
+    fullStat.printAverage (statisticsElementRecall, StatisticsElementRecall);
+    fullStat.printAverage (statisticsElementPrecision, StatisticsElementPrecision);
 
     return 0;
     }
@@ -115,8 +117,7 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
         for (auto& transformation : transformations)
             {
             const ImageTransformation& trans = *transformation;
-            performEstimation (alg, trans, testImage.clone(), tempKeypoints, sourceDescriptors,
-                               statistics.getStatistics (alg.name, trans.name));
+            performEstimation (alg, trans, testImage.clone(), tempKeypoints, sourceDescriptors, statistics.getStatistics (alg.name, trans.name));
             }
 
         sourceDescriptors.release();
@@ -128,6 +129,7 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
 
 void PrintLogs (const CollectedStatistics& stats)
     {
+    // ToDo: print the image's name
     std::ofstream recallLog (_logsDir + "Recall_.txt");
     stats.printStatistics (recallLog, StatisticsElementRecall);
 
@@ -146,7 +148,7 @@ void PrintLogs (const CollectedStatistics& stats)
     std::ofstream ConsumedTimeMsPerDescriptorLog (_logsDir + "ConsumedTimeMsPerDescriptor_.txt");
     stats.printStatistics (ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
 
-    std::ofstream TotalKeypointsLog ("TotalKeypoints_.txt");
+    std::ofstream TotalKeypointsLog (_logsDir + "TotalKeypoints_.txt");
     stats.printStatistics (TotalKeypointsLog, StatisticsElementPointsCount);
     }
 
@@ -155,34 +157,26 @@ void initializeAlgorithmsAndTransformations ()
     bool useBF = true;
 
     // Initialize list of algorithm tuples
+    algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
+    algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
     algorithms.emplace_back ("ORB", ORB::create(), useBF);
     algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
-    algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
-    //algorithms.push_back  (FeatureAlgorithm ("FREAK",  xfeatures2d::FREAK::create(),  useBF));
-    algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
     algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
     algorithms.emplace_back ("LATCH", xfeatures2d::LATCH::create(), useBF);
+    
+    const auto x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation (10, 50, 10, Point2f (0.5f, 0.5f)));
+    const auto y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation (10, 50, 10, Point2f (0.5f, 0.5f)));
 
     transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (15)));
-    transformations.push_back (
-        cv::Ptr<ImageTransformation> (new ImageRotationTransformation (0, 90, 5, Point2f (0.5f, 0.5f))));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (0, 90, 15, Point2f (0.5f, 0.5f))));
     transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (0.5f, 2.0f, 0.25f)));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessImageTransform (-125, +125, 25)));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new CombinedTransform (x, y, CombinedTransform::ParamCombinationType::Extrapolate)));
 
-    const Ptr<ImageTransformation> rotationTransformation = cv::Ptr<ImageTransformation> (
-        new ImageRotationTransformation (0, 45, 15, Point2f (0.5f, 0.5f)));
-    const Ptr<ImageTransformation> scaleTransformation = cv::Ptr<ImageTransformation> (
-        new ImageScalingTransformation (0.75f, 1.75f, 0.25f));
-    transformations.push_back (cv::Ptr<ImageTransformation> (
-        new CombinedTransform (scaleTransformation, rotationTransformation,
-                               CombinedTransform::ParamCombinationType::Full)));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessImageTransform (-175, +175, 25)));
-
-    Ptr<ImageTransformation> x = cv::Ptr<ImageTransformation> (
-        new ImageXRotationTransformation (0, 40, 10, Point2f (0.5f, 0.5f)));
-    Ptr<ImageTransformation> y = cv::Ptr<ImageTransformation> (
-        new ImageYRotationTransformation (0, 40, 10, Point2f (0.5f, 0.5f)));
-    transformations.push_back (
-        cv::Ptr<ImageTransformation> (new CombinedTransform (x, y, CombinedTransform::ParamCombinationType::Full)));
+    //const auto rotationTransformation = cv::Ptr<ImageTransformation> (new ImageRotationTransformation (0, 45, 15, Point2f (0.5f, 0.5f)));
+    //transformations.push_back (rotationTransformation);
+    //const auto scaleTransformation = cv::Ptr<ImageTransformation> (new ImageScalingTransformation (0.75f, 1.75f, 0.25f));
+    //transformations.push_back(cv::Ptr<ImageTransformation> (new CombinedTransform (scaleTransformation, rotationTransformation, CombinedTransform::ParamCombinationType::Full)));
     }
 
 void CreateLogsDir()
