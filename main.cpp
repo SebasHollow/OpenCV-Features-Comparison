@@ -30,7 +30,7 @@ static std::vector<FeatureAlgorithm> algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
 static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
 
-const std::string _defaultTestDir = R"(C:\Users\SebasHollow\Dropbox\Bakalauras\.workdir\Datasets\Resolution\timeTest\)";
+const std::string _defaultTestDir = R"(C:\Dataset\)";
 const std::string _logsDir = R"(logs\)";
 
 void CreateLogsDir ();
@@ -51,6 +51,7 @@ int main (int argc, const char* argv[])
     fs::directory_iterator it (srcDir), eod;
     CollectedStatistics fullStat;
 
+    int imageCount = 0;
     // Analysis happens here:
     BOOST_FOREACH (fs::path const & testImagePath, std::make_pair(it, eod))
         {
@@ -68,7 +69,7 @@ int main (int argc, const char* argv[])
             continue;
             }
 
-        std::cout << "Testing " << testImageName << std::endl;
+        std::cout << "Testing picture " << ++imageCount << ": " << testImageName << std::endl;
         TestImage (testImage, fullStat);
 
         PrintLogs (fullStat);
