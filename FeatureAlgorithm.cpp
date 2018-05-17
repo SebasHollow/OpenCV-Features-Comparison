@@ -34,7 +34,7 @@ FeatureAlgorithm::FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bo
     }
 
 
-bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
+bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
     {
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
@@ -43,12 +43,20 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
     if (kp.empty())
         return false;
 
-    featureEngine->compute (image, kp, desc);
+    try
+        {
+        featureEngine->compute(image, kp, desc);
+        }
+    catch (const cv::Exception& e)
+        {
+        std::cout << e.err << ": " << e.msg << std::endl;
+        return false;
+        }
 
     return !kp.empty();
     }
 
-bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
+bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
     {
     assert(!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
@@ -59,14 +67,23 @@ bool FeatureAlgorithm::extractFeatures(const cv::Mat& image, Keypoints& kp, Desc
 
     start = cv::getTickCount();
     //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
-    featureEngine->compute(image, kp, desc);
+    try
+        {
+        featureEngine->compute(image, kp, desc);
+        }
+    catch (const cv::Exception& e)
+        {
+        std::cout << e.msg << std::endl;
+        return false;
+        }
+
     //memoryAllocated = cv::getAmountOfMemoryAllocated(); // Only works with custom compiled OpenCV version
     end = cv::getTickCount();
 
     return !kp.empty();
     }
 
-Descriptors FeatureAlgorithm::getDescriptors(const cv::Mat& image, Keypoints& kp) const
+Descriptors FeatureAlgorithm::getDescriptors (const cv::Mat& image, Keypoints& kp) const
 {
     Descriptors desc;
     featureEngine->compute(image, kp, desc);

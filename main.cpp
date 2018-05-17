@@ -75,11 +75,9 @@ int main (int argc, const char* argv[])
         PrintLogs (fullStat);
         }
 
-    std::ofstream statisticsElementRecall (_logsDir + "Average_StatisticsElementRecall_.txt");
-    std::ofstream statisticsElementPrecision (_logsDir + "Average_StatisticsElementPrecision_.txt");
 
-    fullStat.printAverage (statisticsElementRecall, StatisticsElementRecall);
-    fullStat.printAverage (statisticsElementPrecision, StatisticsElementPrecision);
+
+
 
     return 0;
     }
@@ -125,12 +123,14 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
         std::cout << "done." << std::endl;
         }
 
+    std::cout << std::endl;
+
+
     sourceKeypoints.clear();
     }
 
 void PrintLogs (const CollectedStatistics& stats)
     {
-    // ToDo: print the image's name
     std::ofstream recallLog (_logsDir + "Recall_.txt");
     stats.printStatistics (recallLog, StatisticsElementRecall);
 
@@ -151,6 +151,15 @@ void PrintLogs (const CollectedStatistics& stats)
 
     std::ofstream TotalKeypointsLog (_logsDir + "TotalKeypoints_.txt");
     stats.printStatistics (TotalKeypointsLog, StatisticsElementPointsCount);
+
+    std::ofstream statisticsElementRecall (_logsDir + "Average_StatisticsElementRecall_.txt");
+    stats.printAverage (statisticsElementRecall, StatisticsElementRecall);
+
+    std::ofstream statisticsElementPrecision (_logsDir + "Average_StatisticsElementPrecision_.txt");
+    stats.printAverage (statisticsElementPrecision, StatisticsElementPrecision);
+
+    std::ofstream performanceStatistics (_logsDir + "performanceStatistics_.txt");
+    stats.printPerformanceStatistics (performanceStatistics);
     }
 
 void initializeAlgorithmsAndTransformations ()
@@ -163,7 +172,7 @@ void initializeAlgorithmsAndTransformations ()
     algorithms.emplace_back ("ORB", ORB::create(), useBF);
     algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
     algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
-    algorithms.emplace_back ("LATCH", xfeatures2d::LATCH::create(), useBF);
+    algorithms.emplace_back("LATCH", xfeatures2d::LATCH::create(), useBF);
     
     const auto x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation (10, 50, 10, Point2f (0.5f, 0.5f)));
     const auto y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation (10, 50, 10, Point2f (0.5f, 0.5f)));

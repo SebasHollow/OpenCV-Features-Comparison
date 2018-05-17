@@ -23,7 +23,7 @@ float distance (const cv::Point2f& a, const cv::Point2f& b)
     return sqrt((a - b).dot(a - b));
     }
 
-cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography);
+cv::Scalar computeReprojectionError (const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography);
 
 inline bool fileExists (const std::string& name)
     {
@@ -50,24 +50,19 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
     for (int i = 0; i < count; i++)
         {
         //std::cout << "Threads: " << omp_get_num_threads() << std::endl;
-        float       arg = x[i];
-        FrameMatchingStatistics& s = stat[i];
-
-        const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + std::to_string(i) + ".png";
+        const float arg = x[i];
 
         cv::Mat transformedImage;
-        //if (fileExists (imgFilepath))
-        //    transformedImage = imread (imgFilepath);
-        //else
-            //{
         transformation.transform (arg, sourceImage, transformedImage);
-        if (!fileExists (imgFilepath))
-            if (SAVE_TRANSFORMED_IMAGES)
-                bool success = imwrite(imgFilepath, transformedImage);
-            //}
 
-        if (SKIP_TRANSFORMATON_ANALYSIS)
-            continue;
+        //if (SAVE_TRANSFORMED_IMAGES)
+        //    {
+        //    const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + "(" + std::to_string(arg) + ").png";
+        //    bool success = imwrite(imgFilepath, transformedImage);
+        //    }
+
+        //if (SKIP_TRANSFORMATON_ANALYSIS)
+        //    continue;
 
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 
@@ -75,8 +70,14 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         size_t memoryAllocated;
         //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
 
-        alg.extractFeatures (transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
+        const bool success = alg.extractFeatures (transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
+        if (!success)
+            {
+            std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
+            continue;
+            }
 
+        FrameMatchingStatistics& s = stat[i];
         // Initialize required fields
         s.memoryAllocated = memoryAllocated;
         s.isValid        = !resKpReal.empty();
@@ -91,43 +92,58 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
 
         alg.matchFeatures (sourceDesc, resDesc, matches);
 
+        // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
         cv::KeyPoint::convert (sourceKp, sourcePoints);
         cv::perspectiveTransform (sourcePoints, sourcePointsInFrame, expectedHomography);
 
-        cv::Mat homography;
+        // Count visible features and correct matches.
+        const int visibleFeatures = CountVisibleFeatures (sourcePoints, transformedImage.cols, transformedImage.rows);
+        const int correctMatches = CountCorrectMatches (matches, sourcePointsInFrame, resKpReal);
 
-        int visibleFeatures = 0;
-        int correctMatches  = 0;
-        const int matchesCount = matches.size();
-
-        for (const auto& point : sourcePoints)
-            {
-            if (point.x <= 0 ||
-                point.y <= 0 ||
-                point.x >= transformedImage.cols ||
-                point.y >= transformedImage.rows)
-                continue;
-
-            visibleFeatures++;
-            }
-
-        for (auto& matche : matches)
-            {
-            const cv::Point2f expected = sourcePointsInFrame[matche.trainIdx];
-            const cv::Point2f actual   = resKpReal[matche.queryIdx].pt;
-
-            if (distance(expected, actual) < 3.0)
-                correctMatches++;
-            }
-
+        // Fill in the remaining statistics.
         s.totalKeypoints += resKpReal.size();
         s.consumedTimeMs += (end - start) * toMsMul;
-        s.precision += correctMatches / static_cast<float>(matchesCount);
+        s.precision += correctMatches / static_cast<float>(matches.size());
         s.recall += correctMatches / static_cast<float>(visibleFeatures);
         }
 
     return true;
+    }
+
+int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows)
+    {
+    int visibleFeatures = 0;
+
+    for (const auto& point : sourcePoints)
+        {
+        if (point.x <= 0 ||
+            point.y <= 0 ||
+            point.x >= imageCols ||
+            point.y >= imageRows)
+            continue;
+
+        visibleFeatures++;
+        }
+
+    return visibleFeatures;
+    }
+
+int CountCorrectMatches (Matches& matches, std::vector<cv::Point2f>& sourcePointsInFrame, Keypoints& resKpReal)
+    {
+    int correctMatches = 0;
+    const int matchesCount = matches.size();
+
+    for (auto& match : matches)
+        {
+        const cv::Point2f expected = sourcePointsInFrame[match.trainIdx];
+        const cv::Point2f actual = resKpReal[match.queryIdx].pt;
+
+        if (distance(expected, actual) < 3.0)
+            correctMatches++;
+        }
+
+    return correctMatches;
     }
 
 cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography)
