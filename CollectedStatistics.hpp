@@ -1,7 +1,6 @@
 #ifndef CollectedStatistics_hpp
 #define CollectedStatistics_hpp
 
-#include <iostream>
 #include <vector>
 #include <map>
 #include <string>

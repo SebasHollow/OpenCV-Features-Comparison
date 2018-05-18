@@ -46,7 +46,7 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
     // To convert ticks to milliseconds
     const double toMsMul = 1000. / cv::getTickFrequency();
 
-    #pragma omp parallel for private(resKpReal, resDesc, matches) schedule(dynamic, 10)
+    #pragma omp parallel for private (resKpReal, resDesc, matches) schedule(dynamic, 10)
     for (int i = 0; i < count; i++)
         {
         //std::cout << "Threads: " << omp_get_num_threads() << std::endl;
@@ -55,17 +55,15 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         cv::Mat transformedImage;
         transformation.transform (arg, sourceImage, transformedImage);
 
-        //if (SAVE_TRANSFORMED_IMAGES)
-        //    {
-        //    const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + "(" + std::to_string(arg) + ").png";
-        //    bool success = imwrite(imgFilepath, transformedImage);
-        //    }
-
-        //if (SKIP_TRANSFORMATON_ANALYSIS)
-        //    continue;
+        if (SAVE_TRANSFORMED_IMAGES)
+            {
+            const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + " (" + std::to_string (arg) + ").png";
+            imwrite (imgFilepath, transformedImage);
+            }
 
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 
+        continue; 
         int64 start, end;
         size_t memoryAllocated;
         //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version

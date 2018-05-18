@@ -63,3 +63,4 @@ enc_temp_folder/
 .vs/
 x64/
 Debug/
+*.TMP

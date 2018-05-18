@@ -2,6 +2,7 @@
 #define ImageTransformation_hpp
 
 #include <opencv2/opencv.hpp>
+#include <utility>
 
 typedef std::vector<cv::KeyPoint> Keypoints;
 typedef cv::Mat                   Descriptors;
@@ -11,142 +12,102 @@ class ImageTransformation
 {
 public:
     std::string name;
-    
-	virtual std::vector<float> getX() const = 0;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const = 0;
+    std::vector<float> m_args;
+
+    virtual std::vector<float> getX() const { return m_args; }
+
+    virtual void transform (float t, const cv::Mat& source, cv::Mat& result) const = 0;
 
     virtual bool multiplyHomography() const;
-    virtual void transform(float t, const Keypoints& source, Keypoints& result) const;
-
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
-
+    virtual void transform (float t, const Keypoints& source, Keypoints& result) const;
+    virtual cv::Mat getHomography (float t, const cv::Mat& source) const;
     virtual ~ImageTransformation();
 
     static bool findHomography( const Keypoints& source, const Keypoints& result, const Matches& input, Matches& inliers, cv::Mat& homography);
 
-    
 protected:
-
-    ImageTransformation(const std::string& transformationName)
-    : name(transformationName)
-    {
-        
-    }
+    ImageTransformation (std::string transformationName)
+        {
+        name = transformationName;
+        }
 };
 
 class ImageRotationTransformation : public ImageTransformation
-{
+    {
 public:
-    ImageRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace);
-    
-	virtual std::vector<float> getX() const;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
-    
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    ImageRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, const cv::Point2f& rotationCenterInUnitSpace, std::string transformationName = "Rotation");
+    ImageRotationTransformation (std::vector<float> angleArgs, std::string transformationName = "Rotation");
+
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
+    cv::Mat getHomography (float t, const cv::Mat& source) const override;
 
 private:
-    float m_startAngleInDeg;
-    float m_endAngleInDeg;
-    float m_step;
-    
     cv::Point2f m_rotationCenterInUnitSpace;
-    
-    std::vector<float> m_args;
-};
+    };
 
 class ImageYRotationTransformation : public ImageTransformation
-{
+    {
 public:
-    ImageYRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace);
-    
-    virtual std::vector<float> getX() const;
-    
-    virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
-    
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
-    virtual bool multiplyHomography() const;
+    ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName = "YRotation");
 
-private:
-    float m_startAngleInDeg;
-    float m_endAngleInDeg;
-    float m_step;
-    
-    cv::Point2f m_rotationCenterInUnitSpace;
-    
-    std::vector<float> m_args;
-};
+    void transform (float t, const cv::Mat& source, cv::Mat& result)const override;
+
+    cv::Mat getHomography (float t, const cv::Mat& source) const override;
+    bool multiplyHomography() const override;
+    };
 
 class ImageXRotationTransformation : public ImageTransformation
-{
+    {
 public:
-    ImageXRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace);
-    
-    virtual std::vector<float> getX() const;
-    
-    virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
-    
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
-    virtual bool multiplyHomography() const;
+    ImageXRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string trasnformationName = "XRotation");
 
-private:
-    float m_startAngleInDeg;
-    float m_endAngleInDeg;
-    float m_step;
-    
-    cv::Point2f m_rotationCenterInUnitSpace;
-    
-    std::vector<float> m_args;
-};
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
+    cv::Mat getHomography (float t, const cv::Mat& source) const override;
+    bool multiplyHomography() const override;
+    };
 
 class ImageScalingTransformation : public ImageTransformation
 {
 public:
-    ImageScalingTransformation(float minScale, float maxScale, float step);
-    
-	virtual std::vector<float> getX() const;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
+    ImageScalingTransformation (float minScale, float maxScale, float step, std::string transformationName = "Scaling");
+    ImageScalingTransformation (std::vector<float> scalingArgs, std::string transformationName = "Scaling");
 
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    void transform(float t, const cv::Mat& source, cv::Mat& result)const override;
 
-private:
-    float m_minScale;
-    float m_maxScale;
-    float m_step;
-    
-    std::vector<float> m_args;
+    cv::Mat getHomography(float t, const cv::Mat& source) const override;
 };
 
 class GaussianBlurTransform : public ImageTransformation
+    {
+public:
+    GaussianBlurTransform (int startSize, int maxKernelSize, int stepSize, std::string transformationName = "Gaussian blur");
+    GaussianBlurTransform (std::vector<float> kernelSizeArgs, std::string transformationName = "Gaussian blur");
+
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
+    };
+
+class BrightnessTransform : public ImageTransformation
 {
 public:
-    GaussianBlurTransform(int maxKernelSize);
-    
-	virtual std::vector<float> getX() const;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
-private:
-    int m_maxKernelSize;
-    std::vector<float> m_args;
+    BrightnessTransform (int min, int max, int step, std::string transformationName = "Brightness");
+    BrightnessTransform (std::vector<float> intensityArgs, std::string transformationName = "Brightness");
+
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
 };
 
-class BrightnessImageTransform : public ImageTransformation
-{
+class PerspectiveTransform : public ImageTransformation
+    {
 public:
-    BrightnessImageTransform(int min, int max, int step);
-        
-	virtual std::vector<float> getX() const;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result)const ;
-    
+    PerspectiveTransform (int count, std::string transformationName = "Perspective");
+
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
+    cv::Mat getHomography (float t, const cv::Mat& source) const override;
+
 private:
-    int m_min;
-    int m_max;
-    int m_step;
-    std::vector<float> m_args;
-};
+    static cv::Mat warpPerspectiveRand(cv::RNG& rng);
+
+    std::vector<cv::Mat> m_homographies;
+    };
 
 class CombinedTransform : public ImageTransformation
 {
@@ -162,47 +123,23 @@ public:
         // Smallest argument vector used as is, the values for other vector is interpolated from other
         Interpolate
     } ParamCombinationType;
-    
-    CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr<ImageTransformation> second, ParamCombinationType type = Extrapolate);
-        
-	virtual std::vector<float> getX() const ;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const ;
 
-    virtual bool multiplyHomography() const;
-    virtual void transform(float t, const Keypoints& source, Keypoints& result) const;
-    
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
+    std::string name;
+    CombinedTransform (cv::Ptr<ImageTransformation> first, const cv::Ptr<ImageTransformation>& second, ParamCombinationType type = Extrapolate);
+
+    std::vector<float> getX() const override;
+
+    void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
+    bool multiplyHomography() const override;
+    void transform (float t, const Keypoints& source, Keypoints& result) const override;
+    cv::Mat getHomography (float t, const cv::Mat& source) const override;
     
 private:
-    std::vector< float >                   m_x;
-    std::vector< std::pair<float, float> > m_params;
-    
+    std::vector<float> m_x;
+    std::vector<std::pair<float, float>> m_params;
+
     cv::Ptr<ImageTransformation> m_first;
     cv::Ptr<ImageTransformation> m_second;
-};
-
-class PerspectiveTransform : public ImageTransformation
-{
-public:
-    PerspectiveTransform(int count);
-    
-	virtual std::vector<float> getX() const;
-    
-	virtual void transform(float t, const cv::Mat& source, cv::Mat& result) const;
-    
-    virtual cv::Mat getHomography(float t, const cv::Mat& source) const;
-    
-private:
-    static cv::Mat warpPerspectiveRand( cv::RNG& rng );
-    
-    float m_min;
-    float m_max;
-    float m_step;
-    
-    std::vector<float>   m_args;
-
-    std::vector<cv::Mat> m_homographies;
 };
 
 #endif

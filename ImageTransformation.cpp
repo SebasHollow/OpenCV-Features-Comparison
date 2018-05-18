@@ -1,26 +1,21 @@
 #include "ImageTransformation.hpp"
 
 bool ImageTransformation::multiplyHomography() const
-{
+    {
     return false;
-}
+    }
 
-void ImageTransformation::transform(float t, const Keypoints& source, Keypoints& result) const
-{
-
-}
+void ImageTransformation::transform (float t, const Keypoints& source, Keypoints& result) const
+    {}
 
 cv::Mat ImageTransformation::getHomography(float t, const cv::Mat& source) const
-{
-    return cv::Mat::eye(3, 3, CV_64FC1);
-}
+    {
+    return cv::Mat::eye (3, 3, CV_64FC1);
+    }
 
+ImageTransformation::~ImageTransformation() = default;
 
-ImageTransformation::~ImageTransformation()
-{
-}
-
-bool ImageTransformation::findHomography( const Keypoints& source, const Keypoints& result, const Matches& input, Matches& inliers, cv::Mat& homography)
+bool ImageTransformation::findHomography (const Keypoints& source, const Keypoints& result, const Matches& input, Matches& inliers, cv::Mat& homography)
 {
     inliers.clear();
 
@@ -113,29 +108,27 @@ bool ImageTransformation::findHomography( const Keypoints& source, const Keypoin
 
 #pragma mark - ImageRotationTransformation implementation
 
-ImageRotationTransformation::ImageRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace)
-    : ImageTransformation("Rotation")
-    , m_startAngleInDeg(startAngleInDeg)
-    , m_endAngleInDeg(endAngleInDeg)
-    , m_step(step)
-    , m_rotationCenterInUnitSpace(rotationCenterInUnitSpace)
-{
+ImageRotationTransformation::ImageRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, const cv::Point2f& rotationCenterInUnitSpace, std::string transformationName)
+    : ImageTransformation (transformationName), m_rotationCenterInUnitSpace (rotationCenterInUnitSpace)
+    {
     // Fill the arguments
     for (float arg = startAngleInDeg; arg <= endAngleInDeg; arg += step)
-        m_args.push_back(arg);
-}
+        if (arg != 0)
+            m_args.push_back (arg);
+    }
 
-std::vector<float> ImageRotationTransformation::getX() const
-{
-    return m_args;
-}
+ImageRotationTransformation::ImageRotationTransformation (std::vector<float> angleArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = angleArgs;
+    }
 
-void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const
-{
-    cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-    cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
-    cv::warpAffine(source, result, rotationMat, source.size(), cv::INTER_CUBIC);
-}
+void ImageRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
+    {
+    const cv::Point2f center (source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
+    const cv::Mat rotationMat = getRotationMatrix2D (center, t, 1);
+    warpAffine (source, result, rotationMat, source.size(), cv::INTER_CUBIC);
+    }
 
 // void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
 //     cv::Point2f center(source.cols / 2.0, source.rows / 2.0);
@@ -145,15 +138,17 @@ void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::
 //     rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
 //     cv::warpAffine(source, result, rot, bbox.size());
 // }
-cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
-{
-    cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-    cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
 
-    cv::Mat h = cv::Mat::eye(3, 3, CV_64FC1);
-    rotationMat.copyTo(h(cv::Range(0, 2), cv::Range(0, 3)));
+cv::Mat ImageRotationTransformation::getHomography (float t, const cv::Mat& source) const
+    {
+    const cv::Point2f center (source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
+    cv::Mat rotationMat = getRotationMatrix2D (center, t, 1);
+
+    cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
+    rotationMat.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
     return h;
 }
+
 // cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
 // {
 //     cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
@@ -166,14 +161,14 @@ cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& sourc
 //     return h;
 // }
 
-void rotateImage(const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
-{
+void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
+    {
     alpha = (alpha - 90.) * CV_PI / 180.;
     beta = (beta - 90.) * CV_PI / 180.;
     gamma = (gamma - 90.) * CV_PI / 180.;
     // get width and height for ease of use in matrices
-    double w = (double)input.cols;
-    double h = (double)input.rows;
+    const auto w = static_cast<double>(input.cols);
+    const auto h = static_cast<double>(input.rows);
     // Projection 2D -> 3D matrix
     cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
                   1, 0, -w / 2,
@@ -212,34 +207,27 @@ void rotateImage(const cv::Mat &input, cv::Mat &output, double alpha, double bet
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (R * A1));
     // Apply matrix transformation
-    cv::warpPerspective(input, output, trans, input.size(), cv::INTER_LANCZOS4);
-}
+    warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
+    }
 
 #pragma mark - ImageYRotationTransformation implementation
 
-ImageYRotationTransformation::ImageYRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace)
-    : ImageTransformation("YRotation")
-    , m_startAngleInDeg(startAngleInDeg)
-    , m_endAngleInDeg(endAngleInDeg)
-    , m_step(step)
-    , m_rotationCenterInUnitSpace(rotationCenterInUnitSpace)
-{
+ImageYRotationTransformation::ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
     // Fill the arguments
     for (float arg = startAngleInDeg; arg <= endAngleInDeg; arg += step)
-        m_args.push_back(arg);
-}
+        if (arg != 0)
+            m_args.push_back (arg);
+    }
 
-std::vector<float> ImageYRotationTransformation::getX() const
-{
-    return m_args;
-}
+void ImageYRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
+    {
+    warpPerspective (source, result, getHomography (t, source), source.size(), cv::INTER_LANCZOS4);
+    }
 
-void ImageYRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
-    cv::warpPerspective(source, result, getHomography(t, source), source.size(), cv::INTER_LANCZOS4);
-}
-
-cv::Mat ImageYRotationTransformation::getHomography(float t, const cv::Mat& source) const
-{
+cv::Mat ImageYRotationTransformation::getHomography (float t, const cv::Mat& source) const
+    {
     double beta = ((90 - t) - 90.) * CV_PI / 180.;
     double w = (double)source.cols;
     double h = (double)source.rows;
@@ -266,35 +254,28 @@ cv::Mat ImageYRotationTransformation::getHomography(float t, const cv::Mat& sour
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (RY * A1));
     return trans;
-}
+    }
 
 bool ImageYRotationTransformation::multiplyHomography() const
-{
+    {
     return true;
-}
+    }
 
 #pragma mark - ImageXRotationTransformation implementation
 
-ImageXRotationTransformation::ImageXRotationTransformation(float startAngleInDeg, float endAngleInDeg, float step, cv::Point2f rotationCenterInUnitSpace)
-    : ImageTransformation("XRotation")
-    , m_startAngleInDeg(startAngleInDeg)
-    , m_endAngleInDeg(endAngleInDeg)
-    , m_step(step)
-    , m_rotationCenterInUnitSpace(rotationCenterInUnitSpace)
-{
+ImageXRotationTransformation::ImageXRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
     // Fill the arguments
     for (float arg = startAngleInDeg; arg <= endAngleInDeg; arg += step)
-        m_args.push_back(arg);
-}
+        if (arg != 0)
+            m_args.push_back (arg);
+    }
 
-std::vector<float> ImageXRotationTransformation::getX() const
-{
-    return m_args;
-}
-
-void ImageXRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
-    cv::warpPerspective(source, result, getHomography(t, source), source.size(), cv::INTER_LANCZOS4);
-}
+void ImageXRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
+    {
+    warpPerspective (source, result, getHomography (t, source), source.size(), cv::INTER_LANCZOS4);
+    }
 
 cv::Mat ImageXRotationTransformation::getHomography(float t, const cv::Mat& source) const
 {
@@ -333,104 +314,99 @@ bool ImageXRotationTransformation::multiplyHomography() const
 
 #pragma mark - ImageScalingTransformation implementation
 
-ImageScalingTransformation::ImageScalingTransformation(float minScale, float maxScale, float step)
-    : ImageTransformation("Scaling")
-    , m_minScale(minScale)
-    , m_maxScale(maxScale)
-    , m_step(step)
-{
+ImageScalingTransformation::ImageScalingTransformation(float minScale, float maxScale, float step, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
     // Fill the arguments
-    for (float arg = minScale; arg <= maxScale; arg += step){
-        m_args.push_back(arg);
+    for (float arg = minScale; arg <= maxScale; arg += step)
+        if (arg != 1.0f)
+            m_args.push_back (arg);
     }
-}
 
-std::vector<float> ImageScalingTransformation::getX() const
-{
-    return m_args;
-}
+ImageScalingTransformation::ImageScalingTransformation (std::vector<float> scalingArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {    
+    m_args = scalingArgs;
+    }
 
-void ImageScalingTransformation::transform(float t, const cv::Mat& source, cv::Mat& result)const
+void ImageScalingTransformation::transform (float t, const cv::Mat& source, cv::Mat& result)const
 {
     cv::Size dstSize(static_cast<int>(source.cols * t + 0.5f), static_cast<int>(source.rows * t + 0.5f));
     cv::resize(source, result, dstSize, cv::INTER_AREA);
 }
 
-cv::Mat ImageScalingTransformation::getHomography(float t, const cv::Mat& source) const
-{
-    cv::Mat h = cv::Mat::eye(3, 3, CV_64FC1);
+cv::Mat ImageScalingTransformation::getHomography (float t, const cv::Mat& source) const
+    {
+    cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
     h.at<double>(0, 0) = h.at<double>(1, 1) = t;
     return h;
-}
+    }
 
 #pragma mark - GaussianBlurTransform implementation
 
-GaussianBlurTransform::GaussianBlurTransform(int maxKernelSize)
-    : ImageTransformation("Gaussian blur")
-    , m_maxKernelSize(maxKernelSize)
-{
-    for (int arg = 1; arg <= maxKernelSize; arg += 2)
-        m_args.push_back(static_cast<float>(arg));
-}
+GaussianBlurTransform::GaussianBlurTransform (int startSize, int maxKernelSize, int stepSize, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    for (int arg = startSize; arg <= maxKernelSize; arg += stepSize)
+        if (arg > 1)
+            m_args.push_back (static_cast<float> (arg));
+    }
 
-std::vector<float> GaussianBlurTransform::getX() const
-{
-    return m_args;
-}
+GaussianBlurTransform::GaussianBlurTransform (std::vector<float> kernelSizeArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = kernelSizeArgs;
+    }
 
-void GaussianBlurTransform::transform(float t, const cv::Mat& source, cv::Mat& result)const
-{
-    int kernelSize = static_cast<int>(t) * 2 + 1;
-    cv::GaussianBlur(source, result, cv::Size(kernelSize, kernelSize), 0);
-}
+
+void GaussianBlurTransform::transform (float t, const cv::Mat& source, cv::Mat& result)const
+    {
+    const int kernelSize = static_cast<int>(t) * 2 + 1;
+    GaussianBlur (source, result, cv::Size (kernelSize, kernelSize), 0);
+    }
 
 #pragma mark - BrightnessImageTransform implementation
 
-BrightnessImageTransform::BrightnessImageTransform(int min, int max, int step)
-    : ImageTransformation("Brightness change")
-    , m_min(min)
-    , m_max(max)
-    , m_step(step)
-{
+BrightnessTransform::BrightnessTransform (int min, int max, int step, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
     for (int arg = min; arg <= max; arg += step)
-        m_args.push_back(static_cast<float>(arg));
-}
+        if (arg != 0)
+            m_args.push_back(static_cast<float>(arg));
+    }
 
-std::vector<float> BrightnessImageTransform::getX() const
-{
-    return m_args;
-}
+BrightnessTransform::BrightnessTransform (std::vector<float> intensityArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = intensityArgs;
+    }
 
-void BrightnessImageTransform::transform(float t, const cv::Mat& source, cv::Mat& result)const
-{
-    result = source + cv::Scalar(t, t, t, t);
-}
+void BrightnessTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
+    {
+    result = source + cv::Scalar (t, t, t, t);
+    }
 
 #pragma mark - CombinedTransform implementation
 
-CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr<ImageTransformation> second, ParamCombinationType type)
-    : ImageTransformation(first->name + "+" + second->name)
-    , m_first(first)
-    , m_second(second)
-{
+CombinedTransform::CombinedTransform (const cv::Ptr<ImageTransformation> first, const cv::Ptr<ImageTransformation>& second, ParamCombinationType type)
+    : ImageTransformation (first->name + "+" + second->name)
+    {
     std::vector<float> x1 = first->getX();
     std::vector<float> x2 = second->getX();
 
     switch (type)
     {
     case Full:
-    {
-        int index = 0;
-        for (size_t i1 = 0; i1 < x1.size(); i1++)
         {
-            for (size_t i2 = 0; i2 < x2.size(); i2++)
-            {
-                m_params.push_back(std::make_pair(x1[i1], x2[i2]));
-                m_x.push_back(index);
+        int index = 0;
+        for (float& i1 : x1)
+            for (float& i2 : x2)
+                {
+                m_params.emplace_back (i1, i2);
+                m_x.push_back (index);
                 index++;
-            }
+                }
         }
-    }
     break;
 
 
@@ -441,8 +417,8 @@ CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr
             int index = 0;
             for (size_t i2 = 0; i2 < x2.size(); i2++)
             {
-                size_t i1 = static_cast<size_t>((float)(x1.size() * i2) / (float)x2.size() + 0.5f);
-                m_params.push_back(std::make_pair(x1[i1], x2[i2]));
+                size_t i1 = static_cast<size_t>(static_cast<float>(x1.size() * i2) / static_cast<float>(x2.size()) + 0.5f);
+                m_params.emplace_back (x1[i1], x2[i2]);
                 m_x.push_back(index);
                 index++;
             }
@@ -452,8 +428,8 @@ CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr
             int index = 0;
             for (size_t i1 = 0; i1 < x1.size(); i1++)
             {
-                size_t i2 = static_cast<size_t>((float)(x2.size() * i1) / (float)x1.size() + 0.5f);
-                m_params.push_back(std::make_pair(x1[i1], x2[i2]));
+                size_t i2 = static_cast<size_t>(static_cast<float>(x2.size() * i1) / static_cast<float>(x1.size()) + 0.5f);
+                m_params.emplace_back (x1[i1], x2[i2]);
                 m_x.push_back(index);
                 index++;
             }
@@ -470,8 +446,8 @@ CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr
             int index = 0;
             for (size_t i1 = 0; i1 < x1.size(); i1++)
             {
-                size_t i2 = static_cast<size_t>((float)(x2.size() * i1) / (float)x1.size() );
-                m_params.push_back(std::make_pair(x1[i1], x2[i2]));
+                size_t i2 = static_cast<size_t>(static_cast<float>(x2.size() * i1) / static_cast<float>(x1.size()) );
+                m_params.emplace_back (x1[i1], x2[i2]);
                 m_x.push_back(index);
                 index++;
             }
@@ -481,8 +457,8 @@ CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr
             int index = 0;
             for (size_t i2 = 0; i2 < x2.size(); i2++)
             {
-                size_t i1 = static_cast<size_t>((float)(x1.size() * i2) / (float)x2.size() );
-                m_params.push_back(std::make_pair(x1[i1], x2[i2]));
+                size_t i1 = static_cast<size_t>(static_cast<float>(x1.size() * i2) / static_cast<float>(x2.size()) );
+                m_params.emplace_back (x1[i1], x2[i2]);
                 m_x.push_back(index);
                 index++;
             }
@@ -491,15 +467,15 @@ CombinedTransform::CombinedTransform(cv::Ptr<ImageTransformation> first, cv::Ptr
 
     default:
         break;
-    };
+    }
 }
 
 std::vector<float> CombinedTransform::getX() const
-{
+    {
     return m_x;
-}
+    }
 
-void CombinedTransform::transform(float t, const cv::Mat& source, cv::Mat& result) const
+void CombinedTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
 {
     size_t index = static_cast<size_t>(t);
     float t1 = m_params[index].first;
@@ -532,7 +508,7 @@ void CombinedTransform::transform(float t, const Keypoints& source, Keypoints& r
     m_second->transform(t2, temp, result);
 }
 
-cv::Mat CombinedTransform::getHomography(float t, const cv::Mat& source) const
+cv::Mat CombinedTransform::getHomography (float t, const cv::Mat& source) const
 {
     size_t index = static_cast<size_t>(t);
 
@@ -551,55 +527,50 @@ cv::Mat CombinedTransform::getHomography(float t, const cv::Mat& source) const
 
 #pragma mark PerspectiveTransform implementation
 
-PerspectiveTransform::PerspectiveTransform(int count)
-    : ImageTransformation("Perspective")
-{
+PerspectiveTransform::PerspectiveTransform (int count, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
     cv::RNG rng;
 
     for (int i = 0; i < count; i++)
-    {
-        m_args.push_back(i);
-        m_homographies.push_back(warpPerspectiveRand(rng));
+        {
+        m_args.push_back (i);
+        m_homographies.push_back (warpPerspectiveRand (rng));
+        }
     }
-}
 
-cv::Mat PerspectiveTransform::warpPerspectiveRand( cv::RNG& rng )
-{
+cv::Mat PerspectiveTransform::warpPerspectiveRand (cv::RNG& rng)
+    {
     cv::Mat H;
 
     H.create(3, 3, CV_64FC1);
-    H.at<double>(0, 0) = rng.uniform( 0.8f, 1.2f);
-    H.at<double>(0, 1) = rng.uniform(-0.1f, 0.1f);
+    H.at<double>(0, 0) = rng.uniform ( 0.8f, 1.2f);
+    H.at<double>(0, 1) = rng.uniform (-0.1f, 0.1f);
     //H.at<double>(0,2) = rng.uniform(-0.1f, 0.1f)*src.cols;
-    H.at<double>(0, 2) = rng.uniform(-0.1f, 0.1f);
-    H.at<double>(1, 0) = rng.uniform(-0.1f, 0.1f);
-    H.at<double>(1, 1) = rng.uniform( 0.8f, 1.2f);
+    H.at<double>(0, 2) = rng.uniform (-0.1f, 0.1f);
+    H.at<double>(1, 0) = rng.uniform (-0.1f, 0.1f);
+    H.at<double>(1, 1) = rng.uniform ( 0.8f, 1.2f);
     //H.at<double>(1,2) = rng.uniform(-0.1f, 0.1f)*src.rows;
-    H.at<double>(1, 2) = rng.uniform(-0.1f, 0.1f);
-    H.at<double>(2, 0) = rng.uniform( -1e-4f, 1e-4f);
-    H.at<double>(2, 1) = rng.uniform( -1e-4f, 1e-4f);
-    H.at<double>(2, 2) = rng.uniform( 0.8f, 1.2f);
+    H.at<double>(1, 2) = rng.uniform (-0.1f, 0.1f);
+    H.at<double>(2, 0) = rng.uniform (-1e-4f, 1e-4f);
+    H.at<double>(2, 1) = rng.uniform (-1e-4f, 1e-4f);
+    H.at<double>(2, 2) = rng.uniform (0.8f, 1.2f);
 
     return H;
-}
+    }
 
-std::vector<float> PerspectiveTransform::getX() const
-{
-    return m_args;
-}
-
-void PerspectiveTransform::transform(float t, const cv::Mat& source, cv::Mat& result) const
-{
-    rotateImage(source, result, 45, 90, 90, 0, 0, source.rows, source.rows);
-}
+void PerspectiveTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
+    {
+    //rotateImage (source, result, 45, 90, 90, 0, 0, source.rows, source.rows);
+    rotateImage (source, result, 90, 90, t * 15, 0, 0, source.rows, source.rows);
+    }
 
 cv::Mat PerspectiveTransform::getHomography(float t, const cv::Mat& source) const
-{
-    cv::Mat h = m_homographies[(int)t].clone();
+    {
+    cv::Mat h = m_homographies[static_cast<int>(t)].clone();
 
     h.at<double>(0, 2) *= source.cols;
     h.at<double>(1, 2) *= source.rows;
 
     return h;
-}
-
+    }

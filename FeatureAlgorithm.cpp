@@ -58,9 +58,9 @@ bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Des
 
 bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
     {
-    assert(!image.empty());
+    assert (!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
-    surf_detector->detect(image, kp);
+    surf_detector->detect (image, kp);
 
     if (kp.empty())
         return false;
@@ -69,7 +69,7 @@ bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Des
     //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
     try
         {
-        featureEngine->compute(image, kp, desc);
+        featureEngine->compute (image, kp, desc);
         }
     catch (const cv::Exception& e)
         {
@@ -84,20 +84,20 @@ bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Des
     }
 
 Descriptors FeatureAlgorithm::getDescriptors (const cv::Mat& image, Keypoints& kp) const
-{
+    {
     Descriptors desc;
-    featureEngine->compute(image, kp, desc);
+    featureEngine->compute (image, kp, desc);
     return desc;
-}
+    }
 
-void FeatureAlgorithm::matchFeatures(const Descriptors& train, const Descriptors& query, Matches& matches) const
-{
-    matcher->match(query, train, matches);
-}
+void FeatureAlgorithm::matchFeatures (const Descriptors& train, const Descriptors& query, Matches& matches) const
+    {
+    matcher->match (query, train, matches);
+    }
 
-void FeatureAlgorithm::matchFeatures(const Descriptors& train, const Descriptors& query, int k, std::vector<Matches>& matches) const
-{
-    assert(knMatchSupported);
-    matcher->knnMatch(query, train, matches, k);
-}
+void FeatureAlgorithm::matchFeatures (const Descriptors& train, const Descriptors& query, int k, std::vector<Matches>& matches) const
+    {
+    assert (knMatchSupported);
+    matcher->knnMatch (query, train, matches, k);
+    }
 
