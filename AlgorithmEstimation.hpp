@@ -5,8 +5,7 @@
 #include "FeatureAlgorithm.hpp"
 #include "ImageTransformation.hpp"
 
-static bool SAVE_TRANSFORMED_IMAGES = true;
-static bool SKIP_TRANSFORMATON_ANALYSIS = false;
+static bool SAVE_TRANSFORMED_IMAGES = false;
 
 int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows);
 

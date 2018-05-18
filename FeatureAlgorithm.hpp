@@ -11,7 +11,7 @@ typedef std::vector<cv::DMatch>   Matches;
 class FeatureAlgorithm
 {
 public:
-    explicit FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather);
+    FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather);
 
     //! Human-friendly name of detection/extraction/matcher combination.
     std::string name;

@@ -63,7 +63,6 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
 
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 
-        continue; 
         int64 start, end;
         size_t memoryAllocated;
         //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
