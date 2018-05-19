@@ -79,6 +79,7 @@ int main (int argc, const char* argv[])
         testPath = _defaultTestDir;
 
     CreateLogsDir();
+    freopen ("log.txt", "w", stdout);
 
     const fs::path srcDir (testPath);
     fs::directory_iterator it (srcDir), eod;
@@ -88,6 +89,7 @@ int main (int argc, const char* argv[])
     // Analysis happens here:
     BOOST_FOREACH (fs::path const & testImagePath, std::make_pair(it, eod))
         {
+
         auto testImageName = testImagePath.filename().string();
         if (!is_regular_file (testImagePath) || testImageName[0] == '.')
             {
@@ -132,6 +134,8 @@ Mat ConvertImage (const Mat& fullTestImage)
 
 void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     {
+    const auto startTime = std::chrono::system_clock::now();
+
     Keypoints sourceKeypoints;
     surf_detector->detect (testImage, sourceKeypoints);
 
@@ -153,6 +157,12 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
         }
 
     sourceKeypoints.clear();
+
+    // Duration logging
+    const auto endTime = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = endTime - startTime;
+    std::cout << "Elapsed time: " << elapsed_seconds.count() << "s";
     std::cout << std::endl;
     }
 
