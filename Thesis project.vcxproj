@@ -119,12 +119,14 @@
     <ClCompile Include="FeatureAlgorithm.cpp" />
     <ClCompile Include="ImageTransformation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AlgorithmEstimation.hpp" />
     <ClInclude Include="CollectedStatistics.hpp" />
     <ClInclude Include="FeatureAlgorithm.hpp" />
     <ClInclude Include="ImageTransformation.hpp" />
+    <ClInclude Include="Util.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

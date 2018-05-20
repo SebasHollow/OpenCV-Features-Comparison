@@ -2,17 +2,16 @@
 #include "CollectedStatistics.hpp"
 #include "FeatureAlgorithm.hpp"
 #include "AlgorithmEstimation.hpp"
+#include "Util.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/filesystem.hpp>
 #include "opencv2/core.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/features2d.hpp"
-#include "opencv2/imgproc.hpp"
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/xfeatures2d/nonfree.hpp"
 #include <numeric>
-#include <fstream>
 #include <cassert>
 
 #include <iostream>
@@ -21,17 +20,14 @@ using namespace cv;
 using namespace std;
 namespace fs = boost::filesystem;
 
-void PrintLogs (const CollectedStatistics& stats);
-Mat ConvertImage (const Mat& fullTestImage);
 void TestImage (const Mat& testImage, CollectedStatistics& statistics);
-void CreateLogsDir();
+
 
 static std::vector<FeatureAlgorithm> algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
 static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
 
 const std::string _defaultTestDir = R"(C:\Dataset\)";
-const std::string _logsDir = R"(logs\)";
 
 const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4};
 
@@ -89,7 +85,6 @@ int main (int argc, const char* argv[])
     // Analysis happens here:
     BOOST_FOREACH (fs::path const & testImagePath, std::make_pair(it, eod))
         {
-
         auto testImageName = testImagePath.filename().string();
         if (!is_regular_file (testImagePath) || testImageName[0] == '.')
             {
@@ -111,25 +106,6 @@ int main (int argc, const char* argv[])
         }
 
     return 0;
-    }
-
-Mat ConvertImage (const Mat& fullTestImage)
-    {
-    Mat testImage;
-
-    switch (fullTestImage.channels())
-        {
-    case 3:
-        cvtColor (fullTestImage, testImage, COLOR_BGR2GRAY);
-        return testImage;
-    case 4:
-        cvtColor (fullTestImage, testImage, COLOR_BGRA2GRAY);
-        return testImage;
-    case 1:
-        return fullTestImage;
-    default:
-        return testImage;
-        }
     }
 
 void TestImage (const Mat& testImage, CollectedStatistics& statistics)
@@ -154,6 +130,7 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
 
         sourceDescriptors.release();
         std::cout << "done." << std::endl;
+        std::cout << std::endl;
         }
 
     sourceKeypoints.clear();
@@ -164,45 +141,4 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     std::chrono::duration<double> elapsed_seconds = endTime - startTime;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s";
     std::cout << std::endl;
-    }
-
-void PrintLogs (const CollectedStatistics& stats)
-    {
-    std::ofstream recallLog (_logsDir + "Recall_.txt");
-    stats.printStatistics (recallLog, StatisticsElementRecall);
-
-    std::ofstream precisionLog (_logsDir + "Precision_.txt");
-    stats.printStatistics (precisionLog, StatisticsElementPrecision);
-
-    std::ofstream memoryAllocatedLog (_logsDir + "MemoryAllocated_.txt");
-    stats.printStatistics (memoryAllocatedLog, StatisticsElementMemoryAllocated);
-
-    std::ofstream ConsumedTimeMsLog (_logsDir + "ConsumedTimeMs.txt");
-    stats.printStatistics (ConsumedTimeMsLog, StatisticsElementConsumedTimeMs);
-
-    std::ofstream memoryAllocatedPerDescriptorLog (_logsDir + "MemoryAllocatedPerDescriptor_.txt");
-    stats.printStatistics (memoryAllocatedPerDescriptorLog, StatisticsElementMemoryAllocatedPerDescriptor);
-
-    std::ofstream ConsumedTimeMsPerDescriptorLog (_logsDir + "ConsumedTimeMsPerDescriptor_.txt");
-    stats.printStatistics (ConsumedTimeMsPerDescriptorLog, StatisticsElementConsumedTimeMsPerDescriptor);
-
-    std::ofstream TotalKeypointsLog (_logsDir + "TotalKeypoints_.txt");
-    stats.printStatistics (TotalKeypointsLog, StatisticsElementPointsCount);
-
-    std::ofstream statisticsElementRecall (_logsDir + "Average_StatisticsElementRecall_.txt");
-    stats.printAverage (statisticsElementRecall, StatisticsElementRecall);
-
-    std::ofstream statisticsElementPrecision (_logsDir + "Average_StatisticsElementPrecision_.txt");
-    stats.printAverage (statisticsElementPrecision, StatisticsElementPrecision);
-
-    std::ofstream performanceStatistics (_logsDir + "performanceStatistics_.txt");
-    stats.printPerformanceStatistics (performanceStatistics);
-    }
-
-void CreateLogsDir ()
-    {
-    const char* path = _logsDir.c_str();
-    const boost::filesystem::path dir (path);
-    if (create_directory (dir))
-        std::cout << "Directory Created: " << _logsDir << std::endl;
     }

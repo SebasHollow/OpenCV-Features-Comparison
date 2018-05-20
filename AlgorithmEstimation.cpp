@@ -64,24 +64,9 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
 
         int64 start, end;
-        size_t memoryAllocated;
-        //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
 
-        const bool success = alg.extractFeatures (transformedImage, resKpReal, resDesc, start, end, memoryAllocated);
-        if (!success)
-            {
-            std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
-            continue;
-            }
-
-        FrameMatchingStatistics& s = stat[i];
-        // Initialize required fields
-        s.memoryAllocated = memoryAllocated;
-        s.isValid        = !resKpReal.empty();
-        s.argumentValue  = arg;
-        s.alg            = alg.name;
-        s.trans          = transformation.name;
-        if (!s.isValid)
+        const bool success = alg.extractFeatures (transformedImage, resKpReal, resDesc, start, end);
+        if (!success || resKpReal.empty())
             {
             std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
             continue;
@@ -92,12 +77,19 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
         cv::KeyPoint::convert (sourceKp, sourcePoints);
-        cv::perspectiveTransform (sourcePoints, sourcePointsInFrame, expectedHomography);
+        perspectiveTransform (sourcePoints, sourcePointsInFrame, expectedHomography);
 
         // Count visible features and correct matches.
         const int visibleFeatures = CountVisibleFeatures (sourcePoints, transformedImage.cols, transformedImage.rows);
         const int correctMatches = CountCorrectMatches (matches, sourcePointsInFrame, resKpReal);
 
+        FrameMatchingStatistics& s = stat[i];
+
+        // Initialize required fields
+        s.isValid = !resKpReal.empty();
+        s.argumentValue = arg;
+        s.alg = alg.name;
+        s.trans = transformation.name;
         // Fill in the remaining statistics.
         s.totalKeypoints += resKpReal.size();
         s.consumedTimeMs += (end - start) * toMsMul;
@@ -143,9 +135,9 @@ int CountCorrectMatches (Matches& matches, std::vector<cv::Point2f>& sourcePoint
     return correctMatches;
     }
 
-cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography)
+cv::Scalar computeReprojectionError (const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography)
     {
-    assert(!matches.empty());
+    assert (!matches.empty());
 
     const int pointsCount = matches.size();
     std::vector<cv::Point2f> srcPoints, dstPoints;
@@ -166,7 +158,6 @@ cv::Scalar computeReprojectionError(const Keypoints& source, const Keypoints& qu
         cv::Point2f v = src - dst;
         distances.push_back(sqrtf(v.dot(v)));
         }
-
 
     cv::Scalar mean, dev;
     meanStdDev(distances, mean, dev);

@@ -33,30 +33,7 @@ FeatureAlgorithm::FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bo
     CV_Assert(fe);
     }
 
-
-bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc) const
-    {
-    assert(!image.empty());
-    cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
-    surf_detector->detect (image, kp);
-
-    if (kp.empty())
-        return false;
-
-    try
-        {
-        featureEngine->compute(image, kp, desc);
-        }
-    catch (const cv::Exception& e)
-        {
-        std::cout << e.err << ": " << e.msg << std::endl;
-        return false;
-        }
-
-    return !kp.empty();
-    }
-
-bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end, size_t& memoryAllocated) const
+bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const
     {
     assert (!image.empty());
     cv::Ptr<cv::Feature2D> surf_detector = cv::xfeatures2d::SURF::create();
@@ -65,20 +42,17 @@ bool FeatureAlgorithm::extractFeatures (const cv::Mat& image, Keypoints& kp, Des
     if (kp.empty())
         return false;
 
-    start = cv::getTickCount();
-    //cv::clearMemoryAllocated(); // Only works with custom compiled OpenCV version
     try
         {
+        start = cv::getTickCount();
         featureEngine->compute (image, kp, desc);
+        end = cv::getTickCount();
         }
     catch (const cv::Exception& e)
         {
         std::cout << e.msg << std::endl;
         return false;
         }
-
-    //memoryAllocated = cv::getAmountOfMemoryAllocated(); // Only works with custom compiled OpenCV version
-    end = cv::getTickCount();
 
     return !kp.empty();
     }
