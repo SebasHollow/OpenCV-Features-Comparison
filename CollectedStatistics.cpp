@@ -121,7 +121,7 @@ std::ostream& FrameMatchingStatistics::writeElement(std::ostream& str, Statistic
 
 SingleRunStatistics& CollectedStatistics::getStatistics(std::string algorithmName, std::string transformationName)
     {
-    return m_allStats[std::make_pair(algorithmName, transformationName)];
+    return m_allStats[std::make_pair (algorithmName, transformationName)];
     }
 
 

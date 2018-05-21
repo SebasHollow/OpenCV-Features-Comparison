@@ -25,22 +25,16 @@ float distance (const cv::Point2f& a, const cv::Point2f& b)
 
 cv::Scalar computeReprojectionError (const Keypoints& source, const Keypoints& query, const Matches& matches, const cv::Mat& homography);
 
-inline bool fileExists (const std::string& name)
-    {
-    struct stat buffer;
-    return stat (name.c_str(), &buffer) == 0;
-    }
-
-bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& transformation, const cv::Mat& sourceImage, const Keypoints& sourceKp,
-                        const Descriptors& sourceDesc, std::vector<FrameMatchingStatistics>& stat)
+bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& transformation, const cv::Mat& srcImage, const Keypoints& srcKeypoints,
+                        const Descriptors& srcDescriptors, std::vector<FrameMatchingStatistics>& stat)
     {
     std::vector<float> x = transformation.getX();
     stat.resize (x.size());
 
     const int count = x.size();
 
-    Keypoints   resKpReal;
-    Descriptors resDesc;
+    Keypoints   resKeypoints;
+    Descriptors resDescriptors;
     Matches     matches;
 
     // To convert ticks to milliseconds
@@ -53,7 +47,8 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         const float arg = x[i];
 
         cv::Mat transformedImage;
-        transformation.transform (arg, sourceImage, transformedImage);
+        transformation.transform (arg, srcImage, transformedImage);
+        const cv::Mat expectedHomography = transformation.getHomography (arg, srcImage);
 
         if (SAVE_TRANSFORMED_IMAGES)
             {
@@ -61,37 +56,33 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
             imwrite (imgFilepath, transformedImage);
             }
 
-        const cv::Mat expectedHomography = transformation.getHomography (arg, sourceImage);
-
         int64 start, end;
-
-        const bool success = alg.extractFeatures (transformedImage, resKpReal, resDesc, start, end);
-        if (!success || resKpReal.empty())
+        const bool success = alg.extractFeatures (transformedImage, resKeypoints, resDescriptors, start, end);
+        if (!success || resKeypoints.empty())
             {
             std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
             continue;
             }
 
-        alg.matchFeatures (sourceDesc, resDesc, matches);
+        alg.matchFeatures (srcDescriptors, resDescriptors, matches);
 
         // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
-        cv::KeyPoint::convert (sourceKp, sourcePoints);
+        cv::KeyPoint::convert (srcKeypoints, sourcePoints);
         perspectiveTransform (sourcePoints, sourcePointsInFrame, expectedHomography);
 
         // Count visible features and correct matches.
         const int visibleFeatures = CountVisibleFeatures (sourcePoints, transformedImage.cols, transformedImage.rows);
-        const int correctMatches = CountCorrectMatches (matches, sourcePointsInFrame, resKpReal);
+        const int correctMatches = CountCorrectMatches (matches, sourcePointsInFrame, resKeypoints);
 
         FrameMatchingStatistics& s = stat[i];
-
         // Initialize required fields
-        s.isValid = !resKpReal.empty();
+        s.isValid = !resKeypoints.empty();
         s.argumentValue = arg;
         s.alg = alg.name;
         s.trans = transformation.name;
         // Fill in the remaining statistics.
-        s.totalKeypoints += resKpReal.size();
+        s.totalKeypoints += resKeypoints.size();
         s.consumedTimeMs += (end - start) * toMsMul;
         s.precision += correctMatches / static_cast<float>(matches.size());
         s.recall += correctMatches / static_cast<float>(visibleFeatures);
@@ -128,7 +119,7 @@ int CountCorrectMatches (Matches& matches, std::vector<cv::Point2f>& sourcePoint
         const cv::Point2f expected = sourcePointsInFrame[match.trainIdx];
         const cv::Point2f actual = resKpReal[match.queryIdx].pt;
 
-        if (distance(expected, actual) < 3.0)
+        if (distance (expected, actual) < 3.0)
             correctMatches++;
         }
 

@@ -61,3 +61,10 @@ void CreateLogsDir()
         std::cout << "Directory Created: " << _logsDir << std::endl;
     }
 
+
+inline bool fileExists(const std::string& name)
+    {
+    struct stat buffer;
+    return stat(name.c_str(), &buffer) == 0;
+    }
+

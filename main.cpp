@@ -29,7 +29,7 @@ static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
 
 const std::string _defaultTestDir = R"(C:\Dataset\)";
 
-const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4};
+const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4 };
 
 void initializeTransformations()
     {

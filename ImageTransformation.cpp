@@ -125,9 +125,20 @@ ImageRotationTransformation::ImageRotationTransformation (std::vector<float> ang
 
 void ImageRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
     {
-    const cv::Point2f center (source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-    const cv::Mat rotationMat = getRotationMatrix2D (center, t, 1);
-    warpAffine (source, result, rotationMat, source.size(), cv::INTER_CUBIC);
+    const cv::Point2f center (source.cols / 2, source.rows / 2);
+
+    cv::Mat rotationMat = getRotationMatrix2D (center, -t, 1);
+    
+    auto cos = abs (rotationMat.at<double>(0, 0));
+    auto sin = abs (rotationMat.at<double>(0, 1));
+
+    auto nW = int (source.rows * sin + source.cols * cos);
+    auto nH = int (source.rows * cos + source.cols * sin);
+
+    rotationMat.at<double>(0, 2) += nW / 2 - source.cols / 2;
+    rotationMat.at<double>(1, 2) += nH / 2 - source.rows / 2;
+
+    warpAffine (source, result, rotationMat, cv::Size (nW, nH));
     }
 
 // void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
@@ -139,10 +150,10 @@ void ImageRotationTransformation::transform (float t, const cv::Mat& source, cv:
 //     cv::warpAffine(source, result, rot, bbox.size());
 // }
 
-cv::Mat ImageRotationTransformation::getHomography (float t, const cv::Mat& source) const
+cv::Mat ImageRotationTransformation::getHomography (float angle, const cv::Mat& source) const
     {
     const cv::Point2f center (source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-    cv::Mat rotationMat = getRotationMatrix2D (center, t, 1);
+    cv::Mat rotationMat = getRotationMatrix2D (center, angle, 1);
 
     cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
     rotationMat.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
@@ -207,7 +218,7 @@ void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double be
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (R * A1));
     // Apply matrix transformation
-    warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
+    warpPerspective (input, output, trans, input.size() * 2, cv::INTER_LANCZOS4);
     }
 
 #pragma mark - ImageYRotationTransformation implementation
