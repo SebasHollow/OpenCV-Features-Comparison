@@ -1,4 +1,5 @@
 #include "AlgorithmEstimation.hpp"
+#include "Util.hpp"
 
 bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev)
 {
@@ -35,7 +36,6 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
 
     Keypoints   resKeypoints;
     Descriptors resDescriptors;
-    Matches     matches;
 
     // To convert ticks to milliseconds
     const double toMsMul = 1000. / cv::getTickFrequency();
@@ -50,11 +50,8 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
         transformation.transform (arg, srcImage, transformedImage);
         const cv::Mat expectedHomography = transformation.getHomography (arg, srcImage);
 
-        if (SAVE_TRANSFORMED_IMAGES)
-            {
-            const cv::String imgFilepath = R"(C:\TransformedImages\)" + transformation.name + " (" + std::to_string (arg) + ").png";
-            imwrite (imgFilepath, transformedImage);
-            }
+        if (SAVE_IMAGES)
+            imwrite (R"(C:\TransformedImages\)" + transformation.name + " (" + std::to_string(arg) + ").png", transformedImage);
 
         int64 start, end;
         const bool success = alg.extractFeatures (transformedImage, resKeypoints, resDescriptors, start, end);
@@ -64,7 +61,18 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
             continue;
             }
 
+        Matches matches;
+
         alg.matchFeatures (srcDescriptors, resDescriptors, matches);
+
+        if (SAVE_IMAGES)
+            {
+            cv::Mat outPic;
+            drawMatches (transformedImage, resKeypoints, srcImage, srcKeypoints, matches, outPic);
+            imwrite (R"(C:\TransformedImages\im1000 matches with )" + transformation.name + " (" + std::to_string(arg) + ").png", outPic);
+
+            continue;
+            }
 
         // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
@@ -90,6 +98,76 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
 
     return true;
     }
+
+bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& transformation, ImageData src, std::vector<FrameMatchingStatistics>& stat)
+    {
+    std::vector<float> x = transformation.getX();
+    stat.resize (x.size());
+    const int count = x.size();
+
+    ImageData res;
+
+    // To convert ticks to milliseconds
+    const double toMsMul = 1000. / cv::getTickFrequency();
+
+    #pragma omp parallel for private (resKpReal, resDesc, matches) schedule(dynamic, 10)
+    for (int i = 0; i < count; i++)
+        {
+        //std::cout << "Threads: " << omp_get_num_threads() << std::endl;
+        const float arg = x[i];
+
+        cv::Mat transformedImage;
+        transformation.transform (arg, src.imageGrey, transformedImage);
+        const cv::Mat expectedHomography = transformation.getHomography (arg, src.imageGrey);
+
+        if (SAVE_IMAGES)
+            imwrite (R"(C:\TransformedImages\)" + src.image + " with " + transformation.name + " (" + std::to_string(arg) + ").png", transformedImage);
+
+        int64 start, end;
+        const bool success = alg.extractFeatures (transformedImage, res.keypoints, res.descriptors, start, end);
+        if (!success || res.keypoints.empty())
+            {
+            std::cout << "Skipped for: " << alg.name << "\t" << transformation.name << "\t" << arg << std::endl;
+            continue;
+            }
+
+        Matches matches;
+        alg.matchFeatures (src.descriptors, res.descriptors, matches);
+
+        if (SAVE_IMAGES)
+            {
+            cv::Mat outPic;
+            drawMatches (src.imageOriginal, src.keypoints, transformedImage, res.keypoints,  matches, outPic);
+            imwrite (R"(C:\TransformedImages\)" + src.image + " matches with " + transformation.name + " (" + std::to_string(arg) + ").png", transformedImage);
+
+            continue;
+            }
+
+        // Calculate source points and source points in expected homography's frame.
+        std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
+        cv::KeyPoint::convert (src.keypoints, sourcePoints);
+        perspectiveTransform (sourcePoints, sourcePointsInFrame, expectedHomography);
+
+        // Count visible features and correct matches.
+        const int visibleFeatures = CountVisibleFeatures (sourcePoints, transformedImage.cols, transformedImage.rows);
+        const int correctMatches = CountCorrectMatches (matches, sourcePointsInFrame, res.keypoints);
+
+        FrameMatchingStatistics& s = stat[i];
+        // Initialize required fields
+        s.isValid = !res.keypoints.empty();
+        s.argumentValue = arg;
+        s.alg = alg.name;
+        s.trans = transformation.name;
+        // Fill in the remaining statistics.
+        s.totalKeypoints += res.keypoints.size();
+        s.consumedTimeMs += (end - start) * toMsMul;
+        s.precision += correctMatches / static_cast<float>(matches.size());
+        s.recall += correctMatches / static_cast<float>(visibleFeatures);
+        }
+
+    return true;
+    }
+
 
 int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows)
     {

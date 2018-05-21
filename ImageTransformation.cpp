@@ -158,7 +158,7 @@ cv::Mat ImageRotationTransformation::getHomography (float angle, const cv::Mat& 
     cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
     rotationMat.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
     return h;
-}
+    }
 
 // cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
 // {
@@ -171,55 +171,6 @@ cv::Mat ImageRotationTransformation::getHomography (float angle, const cv::Mat& 
 //     rotationMat.copyTo(h(cv::Range(0, 2), cv::Range(0, 3)));
 //     return h;
 // }
-
-void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
-    {
-    alpha = (alpha - 90.) * CV_PI / 180.;
-    beta = (beta - 90.) * CV_PI / 180.;
-    gamma = (gamma - 90.) * CV_PI / 180.;
-    // get width and height for ease of use in matrices
-    const auto w = static_cast<double>(input.cols);
-    const auto h = static_cast<double>(input.rows);
-    // Projection 2D -> 3D matrix
-    cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
-                  1, 0, -w / 2,
-                  0, 1, -h / 2,
-                  0, 0,    0,
-                  0, 0,    1);
-    // Rotation matrices around the X, Y, and Z axis
-    cv::Mat RX = (cv::Mat_<double>(4, 4) <<
-                  1,          0,           0, 0,
-                  0, cos(alpha), -sin(alpha), 0,
-                  0, sin(alpha),  cos(alpha), 0,
-                  0,          0,           0, 1);
-    cv::Mat RY = (cv::Mat_<double>(4, 4) <<
-                  cos(beta), 0, -sin(beta), 0,
-                  0, 1,          0, 0,
-                  sin(beta), 0,  cos(beta), 0,
-                  0, 0,          0, 1);
-    cv::Mat RZ = (cv::Mat_<double>(4, 4) <<
-                  cos(gamma), -sin(gamma), 0, 0,
-                  sin(gamma),  cos(gamma), 0, 0,
-                  0,          0,           1, 0,
-                  0,          0,           0, 1);
-    // Composed rotation matrix with (RX, RY, RZ)
-    cv::Mat R = RX * RY * RZ;
-    // Translation matrix
-    cv::Mat T = (cv::Mat_<double>(4, 4) <<
-                 1, 0, 0, dx,
-                 0, 1, 0, dy,
-                 0, 0, 1, dz,
-                 0, 0, 0, 1);
-    // 3D -> 2D matrix
-    cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
-                  f, 0, w / 2, 0,
-                  0, f, h / 2, 0,
-                  0, 0,   1, 0);
-    // Final transformation matrix
-    cv::Mat trans = A2 * (T * (R * A1));
-    // Apply matrix transformation
-    warpPerspective (input, output, trans, input.size() * 2, cv::INTER_LANCZOS4);
-    }
 
 #pragma mark - ImageYRotationTransformation implementation
 
@@ -570,18 +521,127 @@ cv::Mat PerspectiveTransform::warpPerspectiveRand (cv::RNG& rng)
     return H;
     }
 
+void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
+    {
+    alpha = (alpha - 90.) * CV_PI / 180.;
+    beta = (beta - 90.) * CV_PI / 180.;
+    gamma = (gamma - 90.) * CV_PI / 180.;
+    // get width and height for ease of use in matrices
+    const auto w = static_cast<double>(input.cols);
+    const auto h = static_cast<double>(input.rows);
+    // Projection 2D -> 3D matrix
+    cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
+                  1, 0, -w / 2,
+                  0, 1, -h / 2,
+                  0, 0,    0,
+                  0, 0,    1);
+    // Rotation matrices around the X, Y, and Z axis
+    cv::Mat RX = (cv::Mat_<double>(4, 4) <<
+                  1,          0,           0, 0,
+                  0, cos(alpha), -sin(alpha), 0,
+                  0, sin(alpha),  cos(alpha), 0,
+                  0,          0,           0, 1);
+    cv::Mat RY = (cv::Mat_<double>(4, 4) <<
+                  cos(beta), 0, -sin(beta), 0,
+                  0, 1,          0, 0,
+                  sin(beta), 0,  cos(beta), 0,
+                  0, 0,          0, 1);
+    cv::Mat RZ = (cv::Mat_<double>(4, 4) <<
+                  cos(gamma), -sin(gamma), 0, 0,
+                  sin(gamma),  cos(gamma), 0, 0,
+                  0,          0,           1, 0,
+                  0,          0,           0, 1);
+    // Composed rotation matrix with (RX, RY, RZ)
+    cv::Mat R = RX * RY * RZ;
+    // Translation matrix
+    cv::Mat T = (cv::Mat_<double>(4, 4) <<
+                 1, 0, 0, dx,
+                 0, 1, 0, dy,
+                 0, 0, 1, dz,
+                 0, 0, 0, 1);
+    // 3D -> 2D matrix
+    cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
+                  f, 0, w / 2, 0,
+                  0, f, h * 2/*/ 2*/, 0,
+                  0, 0,   1, 0);
+    // Final transformation matrix
+    cv::Mat trans = A2 * (T * (R * A1));
+    // Apply matrix transformation
+
+    //auto cos = abs(trans.at<double>(0, 0));
+    //auto sin = abs(trans.at<double>(0, 1));
+
+    //auto nW = int(input.rows * sin + input.cols * cos);
+    //auto nH = int(input.rows * cos + input.cols * sin);
+
+    //trans.at<double>(0, 2) += nW / 2 - input.cols / 2;
+    //trans.at<double>(1, 2) += nH / 2 - input.rows / 2;
+
+    auto nH = h * 4 * ((90 - alpha) / 90);
+    auto nW = w * 1.5 * ((90 - alpha) / 90);
+    warpPerspective (input, output, trans, cv::Size (nW, nH), cv::INTER_LANCZOS4);
+    //warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
+    }
+
 void PerspectiveTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
     {
     //rotateImage (source, result, 45, 90, 90, 0, 0, source.rows, source.rows);
-    rotateImage (source, result, 90, 90, t * 15, 0, 0, source.rows, source.rows);
+    rotateImage (source, result, 90, t * 15, 90, 0, 0, source.rows, source.rows);
     }
 
-cv::Mat PerspectiveTransform::getHomography(float t, const cv::Mat& source) const
+cv::Mat PerspectiveTransform::getHomography (float t, const cv::Mat& source) const
     {
-    cv::Mat h = m_homographies[static_cast<int>(t)].clone();
+    cv::Mat result;
+    GetPerspectiveTransformationMatrix (source, result, 90, t * 15, 90, 0, 0, source.rows, source.rows);
 
-    h.at<double>(0, 2) *= source.cols;
-    h.at<double>(1, 2) *= source.rows;
-
+    cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
+    result.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
     return h;
+    }
+
+void PerspectiveTransform::GetPerspectiveTransformationMatrix (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f) const
+    {
+    alpha = (alpha - 90.) * CV_PI / 180.;
+    beta = (beta - 90.) * CV_PI / 180.;
+    gamma = (gamma - 90.) * CV_PI / 180.;
+    // get width and height for ease of use in matrices
+    const auto w = static_cast<double>(input.cols);
+    const auto h = static_cast<double>(input.rows);
+    // Projection 2D -> 3D matrix
+    cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
+                  1, 0, -w / 2,
+                  0, 1, -h / 2,
+                  0, 0,    0,
+                  0, 0,    1);
+    // Rotation matrices around the X, Y, and Z axis
+    cv::Mat RX = (cv::Mat_<double>(4, 4) <<
+                  1,          0,           0, 0,
+                  0, cos(alpha), -sin(alpha), 0,
+                  0, sin(alpha),  cos(alpha), 0,
+                  0,          0,           0, 1);
+    cv::Mat RY = (cv::Mat_<double>(4, 4) <<
+                  cos(beta), 0, -sin(beta), 0,
+                  0, 1,          0, 0,
+                  sin(beta), 0,  cos(beta), 0,
+                  0, 0,          0, 1);
+    cv::Mat RZ = (cv::Mat_<double>(4, 4) <<
+                  cos(gamma), -sin(gamma), 0, 0,
+                  sin(gamma),  cos(gamma), 0, 0,
+                  0,          0,           1, 0,
+                  0,          0,           0, 1);
+    // Composed rotation matrix with (RX, RY, RZ)
+    cv::Mat R = RX * RY * RZ;
+    // Translation matrix
+    cv::Mat T = (cv::Mat_<double>(4, 4) <<
+                 1, 0, 0, dx,
+                 0, 1, 0, dy,
+                 0, 0, 1, dz,
+                 0, 0, 0, 1);
+    // 3D -> 2D matrix
+    cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
+                  f, 0, w / 2, 0,
+                  0, f, h * 2/*/ 2*/, 0,
+                  0, 0,   1, 0);
+    // Final transformation matrix
+    output = A2 * (T * (R * A1));
     }

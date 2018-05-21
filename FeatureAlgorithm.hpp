@@ -19,10 +19,7 @@ public:
     //! If true, a KNN-matching and ratio test will be enabled for matching descriptors.
     bool knMatchSupported;
 
-    //! Extracts feature points and compute descriptors from given image.
-    bool extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc) const;
-
-    //! Extracts feature points and compute descriptors from given image and measure the time consumed for computing the features.
+    //! Extracts feature points and compute descriptors from given imageOriginal and measure the time consumed for computing the features.
     bool extractFeatures (const cv::Mat& image, Keypoints& kp, Descriptors& desc, int64& start, int64& end) const;
 
     //! Finds correspondences using regular match.

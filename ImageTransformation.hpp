@@ -102,6 +102,8 @@ public:
 
     void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
     cv::Mat getHomography (float t, const cv::Mat& source) const override;
+    void GetPerspectiveTransformationMatrix(const cv::Mat& input, cv::Mat& output, double alpha, double beta,
+                                               double gamma, double dx, double dy, double dz, double f) const;
 
 private:
     static cv::Mat warpPerspectiveRand(cv::RNG& rng);

@@ -20,8 +20,9 @@ using namespace cv;
 using namespace std;
 namespace fs = boost::filesystem;
 
+void DrawMatches();
 void TestImage (const Mat& testImage, CollectedStatistics& statistics);
-
+void FindAndSaveKeypoints (const ImageData data);
 
 static std::vector<FeatureAlgorithm> algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
@@ -55,11 +56,11 @@ void initializeAlgorithms()
     bool useBF = true;
 
     // Initialize list of algorithm tuples
-    algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
-    algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
-    algorithms.emplace_back ("ORB", ORB::create(), useBF);
-    algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
-    algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
+    //algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
+    //algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
+    //algorithms.emplace_back ("ORB", ORB::create(), useBF);
+    //algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
+    //algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
     algorithms.emplace_back ("LATCH", xfeatures2d::LATCH::create(), useBF);
     }
 
@@ -88,16 +89,25 @@ int main (int argc, const char* argv[])
         auto testImageName = testImagePath.filename().string();
         if (!is_regular_file (testImagePath) || testImageName[0] == '.')
             {
-            std::cout << "Cannot read image from " << testImagePath << std::endl;
+            std::cout << "Cannot read imageOriginal from " << testImagePath << std::endl;
             continue;
             }
 
-        auto testImage = ConvertImage (imread (testImagePath.string()));
+        const auto originalImage = imread (testImagePath.string());
+        auto testImage = ConvertImage (originalImage);
         if (testImage.empty())
             {
-            std::cout << "Cannot read image from " << testImagePath << std::endl;
+            std::cout << "Cannot read imageOriginal from " << testImagePath << std::endl;
             continue;
             }
+
+        ImageData srcData;
+        srcData.image = testImageName;
+        srcData.imageOriginal = originalImage;
+        srcData.imageGrey = testImage;
+
+        if (SAVE_IMAGES)
+            FindAndSaveKeypoints (srcData);
 
         std::cout << "Testing picture " << ++imageCount << ": " << testImageName << std::endl;
         TestImage (testImage, fullStat);
@@ -115,11 +125,16 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     Keypoints sourceKeypoints;
     surf_detector->detect (testImage, sourceKeypoints);
 
+    if (SAVE_IMAGES)
+        DrawMatches ();
+
     for (const auto& alg : algorithms)
         {
         auto tempKeypoints = sourceKeypoints;
         auto sourceDescriptors = alg.getDescriptors (testImage, tempKeypoints);
         std::cout << "Testing " << alg.name << "...";
+
+        continue;
 
         // Apply transformations.
         for (auto& transformation : transformations)
@@ -141,4 +156,44 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     std::chrono::duration<double> elapsed_seconds = endTime - startTime;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s";
     std::cout << std::endl;
+    }
+
+void FindAndSaveKeypoints (const ImageData data)
+    {
+    Keypoints sourceKeypoints;
+    surf_detector->detect (data.imageOriginal, sourceKeypoints);
+    Mat keypointPicture;
+
+    drawKeypoints (data.imageOriginal, sourceKeypoints, keypointPicture);
+    const String imgFilepath = R"(C:\TransformedImages\)" + data.image + "(Keypoints).png";
+    imwrite (imgFilepath, keypointPicture);
+
+    drawKeypoints (data.imageOriginal, sourceKeypoints, keypointPicture, -1, DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    const String richImgFilepath = R"(C:\TransformedImages\)" + data.image + "(Rich keypoints).png";
+    imwrite (richImgFilepath, keypointPicture);
+    }
+
+void DrawMatches ()
+    {
+    const auto pic1 = imread (R"(C:\avatars\masked.png)");
+    //const auto pic2 = imread (R"(C:\avatars\masked.png)");
+    const auto pic2 = imread (R"(C:\avatars\masked (circle).png)");
+
+    Matches matches;
+    Keypoints keypoints1, keypoints2;
+    Descriptors descriptors1, descriptors2;
+    surf_detector->detect (pic1, keypoints1);
+    surf_detector->detect (pic2, keypoints2);
+
+    for (const auto& alg : algorithms)
+        {
+        int64 start, end;
+        alg.extractFeatures (pic1, keypoints1, descriptors1, start, end);
+        alg.extractFeatures (pic2, keypoints2, descriptors2, start, end);
+        alg.matchFeatures (descriptors1, descriptors2, matches);
+
+        Mat outPic;
+        drawMatches (pic2, keypoints2, pic1, keypoints1, matches, outPic);
+        imwrite (R"(C:\TransformedImages\Match example with )" + alg.name + " descriptor.png", outPic);
+        }
     }

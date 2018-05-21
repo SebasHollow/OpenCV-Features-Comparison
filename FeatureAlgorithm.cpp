@@ -23,7 +23,7 @@ cv::Ptr<cv::DescriptorMatcher> matcherForDescriptorType(int descriptorType, int 
     if (bruteForce)
         return cv::Ptr<cv::DescriptorMatcher> (new cv::BFMatcher (defaultNorm, true));
 
-    return  cv::Ptr<cv::DescriptorMatcher> (new cv::FlannBasedMatcher (indexParamsForDescriptorType (descriptorType, defaultNorm)));
+    return cv::Ptr<cv::DescriptorMatcher> (new cv::FlannBasedMatcher (indexParamsForDescriptorType (descriptorType, defaultNorm)));
     }
 
 FeatureAlgorithm::FeatureAlgorithm (std::string n, cv::Ptr<cv::Feature2D> fe, bool useBruteForceMather)

@@ -4,8 +4,9 @@
 #include "CollectedStatistics.hpp"
 #include "FeatureAlgorithm.hpp"
 #include "ImageTransformation.hpp"
+#include "Util.hpp"
 
-static bool SAVE_TRANSFORMED_IMAGES = true;
+static bool SAVE_IMAGES = true;
 
 int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows);
 
@@ -21,5 +22,7 @@ bool performEstimation (const FeatureAlgorithm& alg,
                         const Keypoints& sourceKp,
                         const Descriptors& sourceDesc,
                         SingleRunStatistics& stat);
+
+bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& transformation, ImageData src, std::vector<FrameMatchingStatistics>& stat);
 
 #endif
