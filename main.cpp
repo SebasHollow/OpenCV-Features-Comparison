@@ -34,10 +34,10 @@ const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4 };
 
 void initializeTransformations()
     {
-    transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
     transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (15, 180, 15, Point2f (0.5f, 0.5f))));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
 
     //transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (5, "Z Perspective")));
 
@@ -56,11 +56,11 @@ void initializeAlgorithms()
     bool useBF = true;
 
     // Initialize list of algorithm tuples
-    //algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
-    //algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
-    //algorithms.emplace_back ("ORB", ORB::create(), useBF);
-    //algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
-    //algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
+    algorithms.emplace_back ("SIFT", xfeatures2d::SIFT::create(), useBF);
+    algorithms.emplace_back ("SURF", xfeatures2d::SURF::create(), useBF);
+    algorithms.emplace_back ("ORB", ORB::create(), useBF);
+    algorithms.emplace_back ("BRISK", BRISK::create(), useBF);
+    algorithms.emplace_back ("BRIEF", xfeatures2d::BriefDescriptorExtractor::create(), useBF);
     algorithms.emplace_back ("LATCH", xfeatures2d::LATCH::create(), useBF);
     }
 
@@ -133,8 +133,6 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
         auto tempKeypoints = sourceKeypoints;
         auto sourceDescriptors = alg.getDescriptors (testImage, tempKeypoints);
         std::cout << "Testing " << alg.name << "...";
-
-        continue;
 
         // Apply transformations.
         for (auto& transformation : transformations)

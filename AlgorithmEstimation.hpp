@@ -6,7 +6,7 @@
 #include "ImageTransformation.hpp"
 #include "Util.hpp"
 
-static bool SAVE_IMAGES = true;
+static bool SAVE_IMAGES = false;
 
 int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows);
 
