@@ -31,15 +31,16 @@ static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
 const std::string _defaultTestDir = R"(C:\Dataset\)";
 
 const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4 };
+const std::vector<float> perspectiveRotationArgs = { 15, 30, 45, 60, 75 };
 
 void initializeTransformations()
     {
     //transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (15, 180, 15, Point2f (0.5f, 0.5f))));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (15, 180, 15, Point2f (0.5f, 0.5f))));
     //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
     //transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
 
-    //transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (5, "Z Perspective")));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (perspectiveRotationArgs, "Perspective rotation")));
 
     //const auto x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation (10, 60, 50, Point2f (0.5f, 0.5f)));
     //const auto y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation (10, 20, 50, Point2f (0.5f, 0.5f)));

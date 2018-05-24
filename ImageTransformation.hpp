@@ -99,6 +99,7 @@ class PerspectiveTransform : public ImageTransformation
     {
 public:
     PerspectiveTransform (int count, std::string transformationName = "Perspective");
+    PerspectiveTransform(std::vector<float> angleArgs, std::string transformationName);
 
     void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
     cv::Mat getHomography (float t, const cv::Mat& source) const override;

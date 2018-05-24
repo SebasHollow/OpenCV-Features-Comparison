@@ -320,7 +320,6 @@ GaussianBlurTransform::GaussianBlurTransform (std::vector<float> kernelSizeArgs,
     m_args = kernelSizeArgs;
     }
 
-
 void GaussianBlurTransform::transform (float t, const cv::Mat& source, cv::Mat& result)const
     {
     const int kernelSize = static_cast<int>(t) * 2 + 1;
@@ -501,6 +500,12 @@ PerspectiveTransform::PerspectiveTransform (int count, std::string transformatio
         }
     }
 
+PerspectiveTransform::PerspectiveTransform (std::vector<float> angleArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = angleArgs;
+    }
+
 cv::Mat PerspectiveTransform::warpPerspectiveRand (cv::RNG& rng)
     {
     cv::Mat H;
@@ -562,31 +567,19 @@ void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double be
     // 3D -> 2D matrix
     cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
                   f, 0, w / 2, 0,
-                  0, f, h * 2/*/ 2*/, 0,
+                  0, f, h / 2, 0,
                   0, 0,   1, 0);
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (R * A1));
     // Apply matrix transformation
 
-    //auto cos = abs(trans.at<double>(0, 0));
-    //auto sin = abs(trans.at<double>(0, 1));
-
-    //auto nW = int(input.rows * sin + input.cols * cos);
-    //auto nH = int(input.rows * cos + input.cols * sin);
-
-    //trans.at<double>(0, 2) += nW / 2 - input.cols / 2;
-    //trans.at<double>(1, 2) += nH / 2 - input.rows / 2;
-
-    auto nH = h * 4 * ((90 - alpha) / 90);
-    auto nW = w * 1.5 * ((90 - alpha) / 90);
-    warpPerspective (input, output, trans, cv::Size (nW, nH), cv::INTER_LANCZOS4);
-    //warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
+    warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
     }
 
 void PerspectiveTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
     {
     //rotateImage (source, result, 45, 90, 90, 0, 0, source.rows, source.rows);
-    rotateImage (source, result, 90, t * 15, 90, 0, 0, source.rows, source.rows);
+    rotateImage (source, result, 90, t, 90, 0, 0, source.rows, source.rows);
     }
 
 cv::Mat PerspectiveTransform::getHomography (float t, const cv::Mat& source) const
