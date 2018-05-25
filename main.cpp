@@ -20,10 +20,6 @@ using namespace cv;
 using namespace std;
 namespace fs = boost::filesystem;
 
-void DrawMatches();
-void TestImage (const Mat& testImage, CollectedStatistics& statistics);
-void FindAndSaveKeypoints (const ImageData data);
-
 static std::vector<FeatureAlgorithm> algorithms;
 static std::vector<Ptr<ImageTransformation>> transformations;
 static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
@@ -33,6 +29,8 @@ const std::string _defaultTestDir = R"(C:\Dataset\)";
 const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4 };
 const std::vector<float> perspectiveRotationArgs = { 15, 30, 45, 60, 75 };
 
+void TestImage (const Mat& testImage, CollectedStatistics& statistics);
+
 void initializeTransformations()
     {
     //transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
@@ -40,7 +38,7 @@ void initializeTransformations()
     //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
     //transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
 
-    transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (perspectiveRotationArgs, "Perspective rotation")));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageYRotationTransformation (perspectiveRotationArgs)));
 
     //const auto x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation (10, 60, 50, Point2f (0.5f, 0.5f)));
     //const auto y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation (10, 20, 50, Point2f (0.5f, 0.5f)));
@@ -77,7 +75,8 @@ int main (int argc, const char* argv[])
         testPath = _defaultTestDir;
 
     CreateLogsDir();
-    freopen ("log.txt", "w", stdout);
+    if (!SAVE_IMAGES)
+        freopen ("log.txt", "w", stdout);
 
     const fs::path srcDir (testPath);
     fs::directory_iterator it (srcDir), eod;
@@ -107,9 +106,6 @@ int main (int argc, const char* argv[])
         srcData.imageOriginal = originalImage;
         srcData.imageGrey = testImage;
 
-        if (SAVE_IMAGES)
-            FindAndSaveKeypoints (srcData);
-
         std::cout << "Testing picture " << ++imageCount << ": " << testImageName << std::endl;
         TestImage (testImage, fullStat);
 
@@ -126,8 +122,6 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     Keypoints sourceKeypoints;
     surf_detector->detect (testImage, sourceKeypoints);
 
-    if (SAVE_IMAGES)
-        DrawMatches ();
 
     for (const auto& alg : algorithms)
         {
@@ -144,7 +138,6 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
 
         sourceDescriptors.release();
         std::cout << "done." << std::endl;
-        std::cout << std::endl;
         }
 
     sourceKeypoints.clear();
@@ -155,44 +148,4 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     std::chrono::duration<double> elapsed_seconds = endTime - startTime;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s";
     std::cout << std::endl;
-    }
-
-void FindAndSaveKeypoints (const ImageData data)
-    {
-    Keypoints sourceKeypoints;
-    surf_detector->detect (data.imageOriginal, sourceKeypoints);
-    Mat keypointPicture;
-
-    drawKeypoints (data.imageOriginal, sourceKeypoints, keypointPicture);
-    const String imgFilepath = R"(C:\TransformedImages\)" + data.image + "(Keypoints).png";
-    imwrite (imgFilepath, keypointPicture);
-
-    drawKeypoints (data.imageOriginal, sourceKeypoints, keypointPicture, -1, DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    const String richImgFilepath = R"(C:\TransformedImages\)" + data.image + "(Rich keypoints).png";
-    imwrite (richImgFilepath, keypointPicture);
-    }
-
-void DrawMatches ()
-    {
-    const auto pic1 = imread (R"(C:\avatars\masked.png)");
-    //const auto pic2 = imread (R"(C:\avatars\masked.png)");
-    const auto pic2 = imread (R"(C:\avatars\masked (circle).png)");
-
-    Matches matches;
-    Keypoints keypoints1, keypoints2;
-    Descriptors descriptors1, descriptors2;
-    surf_detector->detect (pic1, keypoints1);
-    surf_detector->detect (pic2, keypoints2);
-
-    for (const auto& alg : algorithms)
-        {
-        int64 start, end;
-        alg.extractFeatures (pic1, keypoints1, descriptors1, start, end);
-        alg.extractFeatures (pic2, keypoints2, descriptors2, start, end);
-        alg.matchFeatures (descriptors1, descriptors2, matches);
-
-        Mat outPic;
-        drawMatches (pic2, keypoints2, pic1, keypoints1, matches, outPic);
-        imwrite (R"(C:\TransformedImages\Match example with )" + alg.name + " descriptor.png", outPic);
-        }
     }

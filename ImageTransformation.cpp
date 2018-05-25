@@ -183,6 +183,12 @@ ImageYRotationTransformation::ImageYRotationTransformation (float startAngleInDe
             m_args.push_back (arg);
     }
 
+ImageYRotationTransformation::ImageYRotationTransformation (std::vector<float> angleArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = angleArgs;
+    }
+
 void ImageYRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
     {
     warpPerspective (source, result, getHomography (t, source), source.size(), cv::INTER_LANCZOS4);
@@ -232,6 +238,12 @@ ImageXRotationTransformation::ImageXRotationTransformation (float startAngleInDe
     for (float arg = startAngleInDeg; arg <= endAngleInDeg; arg += step)
         if (arg != 0)
             m_args.push_back (arg);
+    }
+
+ImageXRotationTransformation::ImageXRotationTransformation (std::vector<float> angleArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = angleArgs;
     }
 
 void ImageXRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const

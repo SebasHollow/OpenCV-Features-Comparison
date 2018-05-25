@@ -48,7 +48,8 @@ private:
 class ImageYRotationTransformation : public ImageTransformation
     {
 public:
-    ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName = "YRotation");
+    ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName = "Perspective");
+    ImageYRotationTransformation (std::vector<float> angleArgs, std::string transformationName = "Perspective");
 
     void transform (float t, const cv::Mat& source, cv::Mat& result)const override;
 
@@ -59,7 +60,8 @@ public:
 class ImageXRotationTransformation : public ImageTransformation
     {
 public:
-    ImageXRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string trasnformationName = "XRotation");
+    ImageXRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string trasnformationName = "Perspective");
+    ImageXRotationTransformation (std::vector<float> angleArgs, std::string transformationName = "Perspective");
 
     void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
     cv::Mat getHomography (float t, const cv::Mat& source) const override;

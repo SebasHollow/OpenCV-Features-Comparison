@@ -62,17 +62,7 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
             }
 
         Matches matches;
-
         alg.matchFeatures (srcDescriptors, resDescriptors, matches);
-
-        if (SAVE_IMAGES)
-            {
-            cv::Mat outPic;
-            drawMatches (transformedImage, resKeypoints, srcImage, srcKeypoints, matches, outPic);
-            imwrite (R"(C:\TransformedImages\im1000 matches with )" + transformation.name + " (" + std::to_string(arg) + ").png", outPic);
-
-            continue;
-            }
 
         // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
