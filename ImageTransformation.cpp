@@ -16,7 +16,7 @@ cv::Mat ImageTransformation::getHomography(float t, const cv::Mat& source) const
 ImageTransformation::~ImageTransformation() = default;
 
 bool ImageTransformation::findHomography (const Keypoints& source, const Keypoints& result, const Matches& input, Matches& inliers, cv::Mat& homography)
-{
+    {
     inliers.clear();
 
     if (input.size() < 4)
@@ -28,83 +28,28 @@ bool ImageTransformation::findHomography (const Keypoints& source, const Keypoin
     //Prepare src and dst points
     std::vector<cv::Point2f> srcPoints, dstPoints;
     for (int i = 0; i < pointsCount; i++)
-    {
+        {
         srcPoints.push_back(source[input[i].trainIdx].pt);
         dstPoints.push_back(result[input[i].queryIdx].pt);
-    }
+        }
 
     // Find homography using RANSAC algorithm
     std::vector<unsigned char> status;
-    homography = cv::findHomography(srcPoints, dstPoints, cv::LMEDS, reprojectionThreshold, status);
+    homography = cv::findHomography (srcPoints, dstPoints, cv::LMEDS, reprojectionThreshold, status);
 
     if (homography.empty() || std::count(status.begin(), status.end(), 1) < 4)
         return false;
 
     for (int i = 0; i < pointsCount; i++)
-    {
+        {
         if (status[i])
-        {
+            {
             inliers.push_back(input[i]);
+            }
         }
-    }
+
     return true;
-
-    /*
-    // Warp dstPoints to srcPoints domain using inverted homography transformation
-    std::vector<cv::Point2f> srcReprojected;
-    cv::perspectiveTransform(dstPoints, srcReprojected, homography.inv());
-
-    // Pass only matches with low reprojection error (less than reprojectionThreshold value in pixels)
-    inliers.clear();
-    for (int i = 0; i < pointsCount; i++)
-    {
-        cv::Point2f actual = srcPoints[i];
-        cv::Point2f expect = srcReprojected[i];
-        cv::Point2f v = actual - expect;
-        float distanceSquared = v.dot(v);
-
-        if (distanceSquared <= reprojectionThreshold * reprojectionThreshold)
-        {
-            inliers.push_back(input[i]);
-        }
     }
-
-    // Test for bad case
-    if (inliers.size() < 4)
-        return false;
-
-    // Now use only good points to find refined homography:
-    std::vector<cv::Point2f> refinedSrc, refinedDst;
-    for (int i = 0; i < inliers.size(); i++)
-    {
-        refinedSrc.push_back(source[inliers[i].trainIdx].pt);
-        refinedDst.push_back(result[inliers[i].queryIdx].pt);
-    }
-
-    // Use least squares method to find precise homography
-    cv::Mat homography2 = cv::findHomography(refinedSrc, refinedDst, 0, reprojectionThreshold);
-
-    // Reproject again:
-    cv::perspectiveTransform(dstPoints, srcReprojected, homography2.inv());
-    inliers.clear();
-
-    for (int i = 0; i < pointsCount; i++)
-    {
-        cv::Point2f actual = srcPoints[i];
-        cv::Point2f expect = srcReprojected[i];
-        cv::Point2f v = actual - expect;
-        float distanceSquared = v.dot(v);
-
-        if (distanceSquared <= reprojectionThreshold * reprojectionThreshold)
-        {
-            inliers.push_back(input[i]);
-        }
-    }
-
-    homography = homography2;
-    return inliers.size() >= 4;
-    */
-}
 
 #pragma mark - ImageRotationTransformation implementation
 
@@ -141,15 +86,6 @@ void ImageRotationTransformation::transform (float t, const cv::Mat& source, cv:
     warpAffine (source, result, rotationMat, cv::Size (nW, nH));
     }
 
-// void ImageRotationTransformation::transform(float t, const cv::Mat& source, cv::Mat& result) const {
-//     cv::Point2f center(source.cols / 2.0, source.rows / 2.0);
-//     cv::Mat rot = cv::getRotationMatrix2D(center, t, 1.0);
-//     cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
-//     rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
-//     rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
-//     cv::warpAffine(source, result, rot, bbox.size());
-// }
-
 cv::Mat ImageRotationTransformation::getHomography (float angle, const cv::Mat& source) const
     {
     const cv::Point2f center (source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
@@ -160,18 +96,6 @@ cv::Mat ImageRotationTransformation::getHomography (float angle, const cv::Mat& 
     return h;
     }
 
-// cv::Mat ImageRotationTransformation::getHomography(float t, const cv::Mat& source) const
-// {
-//     cv::Point2f center(source.cols * m_rotationCenterInUnitSpace.x, source.rows * m_rotationCenterInUnitSpace.y);
-//     cv::Mat rotationMat = cv::getRotationMatrix2D(center, t, 1);
-//     cv::Rect bbox = cv::RotatedRect(center, source.size(), t).boundingRect();
-//     rotationMat.at<double>(0, 2) += bbox.width / 2.0 - center.x;
-//     rotationMat.at<double>(1, 2) += bbox.height / 2.0 - center.y;
-//     cv::Mat h = cv::Mat::eye(3, 3, CV_64FC1);
-//     rotationMat.copyTo(h(cv::Range(0, 2), cv::Range(0, 3)));
-//     return h;
-// }
-
 #pragma mark - ImageYRotationTransformation implementation
 
 ImageYRotationTransformation::ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName)
@@ -181,6 +105,12 @@ ImageYRotationTransformation::ImageYRotationTransformation (float startAngleInDe
     for (float arg = startAngleInDeg; arg <= endAngleInDeg; arg += step)
         if (arg != 0)
             m_args.push_back (arg);
+    }
+
+ImageYRotationTransformation::ImageYRotationTransformation (std::vector<float> scalingArgs, std::string transformationName)
+    : ImageTransformation(transformationName)
+    {
+    m_args = scalingArgs;
     }
 
 void ImageYRotationTransformation::transform (float t, const cv::Mat& source, cv::Mat& result) const
@@ -240,7 +170,7 @@ void ImageXRotationTransformation::transform (float t, const cv::Mat& source, cv
     }
 
 cv::Mat ImageXRotationTransformation::getHomography(float t, const cv::Mat& source) const
-{
+    {
     double alpha = ((90 - t) - 90.) * CV_PI / 180.;
     double w = (double)source.cols;
     double h = (double)source.rows;
@@ -267,7 +197,7 @@ cv::Mat ImageXRotationTransformation::getHomography(float t, const cv::Mat& sour
     // Final transformation matrix
     cv::Mat trans = A2 * (T * (RX * A1));
     return trans;
-}
+    }
 
 bool ImageXRotationTransformation::multiplyHomography() const
 {
@@ -319,7 +249,6 @@ GaussianBlurTransform::GaussianBlurTransform (std::vector<float> kernelSizeArgs,
     {
     m_args = kernelSizeArgs;
     }
-
 
 void GaussianBlurTransform::transform (float t, const cv::Mat& source, cv::Mat& result)const
     {
@@ -501,6 +430,13 @@ PerspectiveTransform::PerspectiveTransform (int count, std::string transformatio
         }
     }
 
+
+PerspectiveTransform::PerspectiveTransform (std::vector<float> angleArgs, std::string transformationName)
+    : ImageTransformation (transformationName)
+    {
+    m_args = angleArgs;
+    }
+
 cv::Mat PerspectiveTransform::warpPerspectiveRand (cv::RNG& rng)
     {
     cv::Mat H;
@@ -521,82 +457,132 @@ cv::Mat PerspectiveTransform::warpPerspectiveRand (cv::RNG& rng)
     return H;
     }
 
-void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
+cv::Mat get3DRotationMatrix (double alpha, double beta, double gamma)
     {
-    alpha = (alpha - 90.) * CV_PI / 180.;
-    beta = (beta - 90.) * CV_PI / 180.;
-    gamma = (gamma - 90.) * CV_PI / 180.;
-    // get width and height for ease of use in matrices
-    const auto w = static_cast<double>(input.cols);
-    const auto h = static_cast<double>(input.rows);
-    // Projection 2D -> 3D matrix
-    cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
-                  1, 0, -w / 2,
-                  0, 1, -h / 2,
-                  0, 0,    0,
-                  0, 0,    1);
+    const auto a = (alpha - 90.) * CV_PI / 180.;
+    const auto b = (beta - 90.) * CV_PI / 180.;
+    const auto g = (gamma - 90.) * CV_PI / 180.;
+
     // Rotation matrices around the X, Y, and Z axis
     cv::Mat RX = (cv::Mat_<double>(4, 4) <<
-                  1,          0,           0, 0,
-                  0, cos(alpha), -sin(alpha), 0,
-                  0, sin(alpha),  cos(alpha), 0,
-                  0,          0,           0, 1);
+                  1,      0,       0, 0,
+                  0, cos(a), -sin(a), 0,
+                  0, sin(a),  cos(a), 0,
+                  0,      0,       0, 1);
+
     cv::Mat RY = (cv::Mat_<double>(4, 4) <<
-                  cos(beta), 0, -sin(beta), 0,
-                  0, 1,          0, 0,
-                  sin(beta), 0,  cos(beta), 0,
-                  0, 0,          0, 1);
+                  cos(b), 0, -sin(b), 0,
+                       0, 1,       0, 0,
+                  sin(b), 0,  cos(b), 0,
+                       0, 0,       0, 1);
+
     cv::Mat RZ = (cv::Mat_<double>(4, 4) <<
-                  cos(gamma), -sin(gamma), 0, 0,
-                  sin(gamma),  cos(gamma), 0, 0,
-                  0,          0,           1, 0,
-                  0,          0,           0, 1);
-    // Composed rotation matrix with (RX, RY, RZ)
+                  cos(g), -sin(g), 0, 0,
+                  sin(g),  cos(g), 0, 0,
+                       0,       0, 1, 0,
+                       0,       0, 0, 1);
+
+    // Composed 3D rotation matrix with (RX, RY, RZ)
     cv::Mat R = RX * RY * RZ;
+    return R;
+    }
+
+cv::Size GetNewSize (double w, double h, cv::Mat trans)
+    {
+    std::vector<cv::Point2f> corners = {
+        cv::Point2f (0, 0),
+        cv::Point2f (0, h),
+        cv::Point2f (w, h),
+        cv::Point2f (w, 0) };
+
+    std::vector<cv::Point2f> newCorners;
+
+    cv::Mat cornersMat = cv::Mat(corners);
+    transform (cornersMat, cornersMat, trans);
+    //cv::perspectiveTransform(cornersMat, cornersMat, trans);
+
+    cv::Point2f p0 (cornersMat.data[0]);
+    cv::Point2f p1 (cornersMat.data[1]);
+    cv::Point2f p2 (cornersMat.data[2]);
+    cv::Point2f p3 (cornersMat.data[3]);
+
+    double x = 0;
+    double y = 0;
+    for (int i = 0; i < corners.size(); i++)
+        {
+        cv::Point2f p (cornersMat.data[i]);
+        if (p.x > x)
+            x = p.x;
+
+        if (p.y > y)
+            y = p.y;
+        }
+
+    return cv::Size (w + x, h + x);
+    }
+
+void rotateImage (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f)
+    {
+    const auto a = (alpha - 90.) * CV_PI / 180.;
+    const auto b = (beta  - 90.) * CV_PI / 180.;
+    const auto g = (gamma - 90.) * CV_PI / 180.;
+
+    double w = static_cast<double>(input.cols);
+    double h = static_cast<double>(input.rows);
+
+    // Projection 2D -> 3D matrix
+    cv::Mat A1 = (cv::Mat_<double>(4, 3) <<
+                  1, 0, 0.5 * -w,
+                  0, 1, 0.5 * -h,
+                  0, 0,        0,
+                  0, 0,        1);
+
+    // Composed 3D rotation matrix with (RX, RY, RZ)
+    const cv::Mat R = get3DRotationMatrix (alpha, beta, gamma);
+
     // Translation matrix
     cv::Mat T = (cv::Mat_<double>(4, 4) <<
                  1, 0, 0, dx,
                  0, 1, 0, dy,
                  0, 0, 1, dz,
                  0, 0, 0, 1);
+
     // 3D -> 2D matrix
     cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
-                  f, 0, w / 2, 0,
-                  0, f, h * 2/*/ 2*/, 0,
-                  0, 0,   1, 0);
+                  f, 0, 2 * w, 0,
+                  0, f, 2 * h, 0,
+                  0, 0,       1, 0);
+
     // Final transformation matrix
-    cv::Mat trans = A2 * (T * (R * A1));
+    const cv::Mat trans = A2 * (T * (R * A1));
+
+    // Calclate the size after the transform
+    //const auto newSize = GetNewSize (h, w, trans);
+
+    //h1, w1 = img1.shape[:2]
+    //pts1 = float32([[0, 0], [0, h1], [w1, h1], [w1, 0]]).reshape(-1, 1, 2)
+    //[xmin, ymin] = int32(pts.min(axis = 0).ravel() - 0.5)
+
     // Apply matrix transformation
-
-    //auto cos = abs(trans.at<double>(0, 0));
-    //auto sin = abs(trans.at<double>(0, 1));
-
-    //auto nW = int(input.rows * sin + input.cols * cos);
-    //auto nH = int(input.rows * cos + input.cols * sin);
-
-    //trans.at<double>(0, 2) += nW / 2 - input.cols / 2;
-    //trans.at<double>(1, 2) += nH / 2 - input.rows / 2;
-
-    auto nH = h * 4 * ((90 - alpha) / 90);
-    auto nW = w * 1.5 * ((90 - alpha) / 90);
-    warpPerspective (input, output, trans, cv::Size (nW, nH), cv::INTER_LANCZOS4);
     //warpPerspective (input, output, trans, input.size(), cv::INTER_LANCZOS4);
+    //warpPerspective (input, output, trans, newSize, cv::INTER_LANCZOS4);
+    warpPerspective (input, output, trans, cv::Size (0, 0), cv::INTER_LANCZOS4);
     }
 
 void PerspectiveTransform::transform (float t, const cv::Mat& source, cv::Mat& result) const
     {
-    //rotateImage (source, result, 45, 90, 90, 0, 0, source.rows, source.rows);
-    rotateImage (source, result, 90, t * 15, 90, 0, 0, source.rows, source.rows);
+    rotateImage (source, result, 90, t - 90, 90, 0, 0, source.rows, source.rows);
     }
 
 cv::Mat PerspectiveTransform::getHomography (float t, const cv::Mat& source) const
     {
     cv::Mat result;
-    GetPerspectiveTransformationMatrix (source, result, 90, t * 15, 90, 0, 0, source.rows, source.rows);
+    GetPerspectiveTransformationMatrix (source, result, 90, 90 - t, 90, 0, 0, source.rows, source.rows);
 
-    cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
-    result.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
-    return h;
+    //cv::Mat h = cv::Mat::eye (3, 3, CV_64FC1);
+    //result.copyTo (h (cv::Range (0, 2), cv::Range (0, 3)));
+    //return h;
+    return result;
     }
 
 void PerspectiveTransform::GetPerspectiveTransformationMatrix (const cv::Mat &input, cv::Mat &output, double alpha, double beta, double gamma, double dx, double dy, double dz, double f) const
@@ -640,7 +626,7 @@ void PerspectiveTransform::GetPerspectiveTransformationMatrix (const cv::Mat &in
     // 3D -> 2D matrix
     cv::Mat A2 = (cv::Mat_<double>(3, 4) <<
                   f, 0, w / 2, 0,
-                  0, f, h * 2/*/ 2*/, 0,
+                  0, f, h / 2, 0,
                   0, 0,   1, 0);
     // Final transformation matrix
     output = A2 * (T * (R * A1));

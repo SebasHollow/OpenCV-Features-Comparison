@@ -41,7 +41,6 @@ FrameMatchingStatistics::FrameMatchingStatistics()
     trans = "";
 }
 
-
 bool FrameMatchingStatistics::tryGetValue(StatisticElement element, float& value) const
     {
     if (!isValid)

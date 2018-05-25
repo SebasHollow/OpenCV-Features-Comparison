@@ -31,18 +31,19 @@ static Ptr<Feature2D> surf_detector = xfeatures2d::SURF::create();
 const std::string _defaultTestDir = R"(C:\Dataset\)";
 
 const std::vector<float> scalingArgs = { 0.25, 0.5, 0.75, 2, 3, 4 };
+const std::vector<float> perspectiveRotationArgs = { 15, 30, 45, 60, 75 };
 
 void initializeTransformations()
     {
-    transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (15, 180, 15, Point2f (0.5f, 0.5f))));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
-    transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new GaussianBlurTransform (5, 30, 5)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageRotationTransformation (15, 180, 15, Point2f (0.5f, 0.5f))));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageScalingTransformation (scalingArgs)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new BrightnessTransform (-125, +125, 25)));
 
-    //transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (5, "Z Perspective")));
+    transformations.push_back (cv::Ptr<ImageTransformation> (new PerspectiveTransform (perspectiveRotationArgs, "Perspective")));
 
     //const auto x = cv::Ptr<ImageTransformation>(new ImageXRotationTransformation (10, 60, 50, Point2f (0.5f, 0.5f)));
-    //const auto y = cv::Ptr<ImageTransformation>(new ImageYRotationTransformation (10, 20, 50, Point2f (0.5f, 0.5f)));
+    //transformations.push_back (cv::Ptr<ImageTransformation> (new ImageYRotationTransformation (perspectiveRotationArgs, "Perspective")));
     //transformations.push_back (cv::Ptr<ImageTransformation> (new CombinedTransform (x, y, CombinedTransform::ParamCombinationType::Full)));
 
     //const auto rotationTransformation = cv::Ptr<ImageTransformation> (new ImageRotationTransformation (0, 45, 15, Point2f (0.5f, 0.5f)));
@@ -76,7 +77,7 @@ int main (int argc, const char* argv[])
         testPath = _defaultTestDir;
 
     CreateLogsDir();
-    freopen ("log.txt", "w", stdout);
+    //freopen ("log.txt", "w", stdout);
 
     const fs::path srcDir (testPath);
     fs::directory_iterator it (srcDir), eod;
@@ -106,11 +107,18 @@ int main (int argc, const char* argv[])
         srcData.imageOriginal = originalImage;
         srcData.imageGrey = testImage;
 
-        if (SAVE_IMAGES)
-            FindAndSaveKeypoints (srcData);
+        //if (SAVE_IMAGES)
 
         std::cout << "Testing picture " << ++imageCount << ": " << testImageName << std::endl;
-        TestImage (testImage, fullStat);
+
+        if (SAVE_IMAGES)
+            {
+            FindAndSaveKeypoints (srcData);
+            DrawMatches();
+            TestImage (originalImage, fullStat);
+            }
+        else
+            TestImage (testImage, fullStat);
 
         PrintLogs (fullStat);
         }
@@ -125,16 +133,11 @@ void TestImage (const Mat& testImage, CollectedStatistics& statistics)
     Keypoints sourceKeypoints;
     surf_detector->detect (testImage, sourceKeypoints);
 
-    if (SAVE_IMAGES)
-        DrawMatches ();
-
     for (const auto& alg : algorithms)
         {
         auto tempKeypoints = sourceKeypoints;
         auto sourceDescriptors = alg.getDescriptors (testImage, tempKeypoints);
         std::cout << "Testing " << alg.name << "...";
-
-        continue;
 
         // Apply transformations.
         for (auto& transformation : transformations)
@@ -175,9 +178,9 @@ void FindAndSaveKeypoints (const ImageData data)
 
 void DrawMatches ()
     {
-    const auto pic1 = imread (R"(C:\avatars\masked.png)");
+    const auto pic1 = imread (R"()");
     //const auto pic2 = imread (R"(C:\avatars\masked.png)");
-    const auto pic2 = imread (R"(C:\avatars\masked (circle).png)");
+    const auto pic2 = imread (R"()");
 
     Matches matches;
     Keypoints keypoints1, keypoints2;

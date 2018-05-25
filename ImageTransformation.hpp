@@ -49,6 +49,7 @@ class ImageYRotationTransformation : public ImageTransformation
     {
 public:
     ImageYRotationTransformation (float startAngleInDeg, float endAngleInDeg, float step, std::string transformationName = "YRotation");
+    ImageYRotationTransformation(std::vector<float> scalingArgs, std::string transformationName);
 
     void transform (float t, const cv::Mat& source, cv::Mat& result)const override;
 
@@ -99,6 +100,7 @@ class PerspectiveTransform : public ImageTransformation
     {
 public:
     PerspectiveTransform (int count, std::string transformationName = "Perspective");
+    PerspectiveTransform(std::vector<float> angleArgs, std::string transformationName);
 
     void transform (float t, const cv::Mat& source, cv::Mat& result) const override;
     cv::Mat getHomography (float t, const cv::Mat& source) const override;

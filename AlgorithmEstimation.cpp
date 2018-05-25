@@ -2,7 +2,7 @@
 #include "Util.hpp"
 
 bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistance, float& stdDev)
-{
+    {
     if (matches.empty())
         return false;
 
@@ -17,7 +17,7 @@ bool computeMatchesDistanceStatistics(const Matches& matches, float& meanDistanc
     stdDev       = static_cast<float> (dev.val[0]);
 
     return false;
-}
+    }
 
 float distance (const cv::Point2f& a, const cv::Point2f& b)
     {
@@ -65,14 +65,14 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
 
         alg.matchFeatures (srcDescriptors, resDescriptors, matches);
 
-        if (SAVE_IMAGES)
-            {
-            cv::Mat outPic;
-            drawMatches (transformedImage, resKeypoints, srcImage, srcKeypoints, matches, outPic);
-            imwrite (R"(C:\TransformedImages\im1000 matches with )" + transformation.name + " (" + std::to_string(arg) + ").png", outPic);
+        //if (SAVE_IMAGES)
+        //    {
+        //    cv::Mat outPic;
+        //    drawMatches (transformedImage, resKeypoints, srcImage, srcKeypoints, matches, outPic);
+        //    imwrite (R"(C:\TransformedImages\im1000 matches with )" + transformation.name + " (" + std::to_string(arg) + ").png", outPic);
 
-            continue;
-            }
+        //    continue;
+        //    }
 
         // Calculate source points and source points in expected homography's frame.
         std::vector<cv::Point2f> sourcePoints, sourcePointsInFrame;
@@ -168,7 +168,6 @@ bool performEstimation (const FeatureAlgorithm& alg, const ImageTransformation& 
     return true;
     }
 
-
 int CountVisibleFeatures (std::vector<cv::Point2f>& sourcePoints, int imageCols, int imageRows)
     {
     int visibleFeatures = 0;
@@ -197,7 +196,7 @@ int CountCorrectMatches (Matches& matches, std::vector<cv::Point2f>& sourcePoint
         const cv::Point2f expected = sourcePointsInFrame[match.trainIdx];
         const cv::Point2f actual = resKpReal[match.queryIdx].pt;
 
-        if (distance (expected, actual) < 3.0)
+        if (distance (expected, actual) < 3.0) // ToDo: extract constant
             correctMatches++;
         }
 
